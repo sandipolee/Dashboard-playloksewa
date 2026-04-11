@@ -1,0 +1,62 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-background text-on-background font-body antialiased min-h-screen flex flex-col;
+    background-color: #051425;
+  }
+}
+
+@layer utilities {
+  .material-symbols-outlined {
+    font-family: 'Material Symbols Outlined';
+    font-weight: normal;
+    font-style: normal;
+    font-size: 24px;
+    line-height: 1;
+    letter-spacing: normal;
+    text-transform: none;
+    display: inline-block;
+    white-space: nowrap;
+    word-wrap: normal;
+    direction: ltr;
+    -webkit-font-feature-settings: 'liga';
+    font-feature-settings: 'liga';
+    -webkit-font-smoothing: antialiased;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+  }
+
+  .custom-scrollbar::-webkit-scrollbar {
+    width: 4px;
+  }
+  .custom-scrollbar::-webkit-scrollbar-track {
+    background: #0d1c2e;
+  }
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    background: #283648;
+    border-radius: 10px;
+  }
+
+  .input-editorial {
+    @apply bg-surface-container-low border-b-2 border-outline-variant rounded-t;
+    transition: all 0.2s ease;
+  }
+  .input-editorial:focus {
+    @apply outline-none ring-0 border-primary bg-surface-container-lowest;
+  }
+
+  .btn-primary-gradient {
+    @apply bg-gradient-to-r from-primary to-primary-container text-on-primary-container;
+  }
+
+  .ghost-border {
+    border: 1px solid rgba(66, 71, 84, 0.15);
+  }
+
+  .bg-grid-pattern {
+    background-image: radial-gradient(circle at 2px 2px, rgba(173, 198, 255, 0.05) 1px, transparent 0);
+    background-size: 32px 32px;
+  }
+}

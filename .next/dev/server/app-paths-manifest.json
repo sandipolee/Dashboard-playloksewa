@@ -1,0 +1,9 @@
+{
+  "/(dashboard)/model-sets/create/page": "app/(dashboard)/model-sets/create/page.js",
+  "/(dashboard)/model-sets/page": "app/(dashboard)/model-sets/page.js",
+  "/(dashboard)/page": "app/(dashboard)/page.js",
+  "/(dashboard)/revenue/page": "app/(dashboard)/revenue/page.js",
+  "/(dashboard)/settings/page": "app/(dashboard)/settings/page.js",
+  "/(dashboard)/users/page": "app/(dashboard)/users/page.js",
+  "/login/page": "app/login/page.js"
+}
