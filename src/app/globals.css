@@ -4,8 +4,8 @@
 
 @layer base {
   body {
-    @apply bg-background text-on-background font-body antialiased min-h-screen flex flex-col;
-    background-color: #051425;
+    @apply bg-background text-on-surface font-body antialiased min-h-screen flex flex-col;
+    background-color: #0f1117;
   }
 }
 
@@ -14,7 +14,7 @@
     font-family: 'Material Symbols Outlined';
     font-weight: normal;
     font-style: normal;
-    font-size: 24px;
+    font-size: 20px;
     line-height: 1;
     letter-spacing: normal;
     text-transform: none;
@@ -25,38 +25,38 @@
     -webkit-font-feature-settings: 'liga';
     font-feature-settings: 'liga';
     -webkit-font-smoothing: antialiased;
-    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+    font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
   }
 
   .custom-scrollbar::-webkit-scrollbar {
     width: 4px;
   }
   .custom-scrollbar::-webkit-scrollbar-track {
-    background: #0d1c2e;
+    background: transparent;
   }
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    background: #283648;
+    @apply bg-outline-variant/50;
     border-radius: 10px;
   }
 
   .input-editorial {
-    @apply bg-surface-container-low border-b-2 border-outline-variant rounded-t;
+    @apply bg-surface border border-outline-variant rounded-lg px-4 py-2.5;
     transition: all 0.2s ease;
   }
   .input-editorial:focus {
-    @apply outline-none ring-0 border-primary bg-surface-container-lowest;
+    @apply outline-none ring-2 ring-primary/20 border-primary bg-surface;
   }
 
   .btn-primary-gradient {
-    @apply bg-gradient-to-r from-primary to-primary-container text-on-primary-container;
+    @apply bg-primary hover:opacity-90 text-white shadow-lg shadow-primary/20;
   }
 
   .ghost-border {
-    border: 1px solid rgba(66, 71, 84, 0.15);
+    border: 1px solid rgba(140, 144, 159, 0.1);
   }
 
   .bg-grid-pattern {
-    background-image: radial-gradient(circle at 2px 2px, rgba(173, 198, 255, 0.05) 1px, transparent 0);
-    background-size: 32px 32px;
+    background-image: radial-gradient(circle at 1px 1px, rgba(140, 144, 159, 0.05) 1px, transparent 0);
+    background-size: 24px 24px;
   }
 }
