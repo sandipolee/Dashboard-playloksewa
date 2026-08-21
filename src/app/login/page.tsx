@@ -17,50 +17,66 @@ export default function Login() {
     setLoading(true);
     setMessage(null);
 
-    const supabase = createClient();
+    try {
+      const supabase = createClient();
 
-    if (isSignUp) {
-      const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: {
-            full_name: email.split("@")[0],
+      if (isSignUp) {
+        const { data, error } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: email.split("@")[0],
+            },
           },
-        },
-      });
-
-      setLoading(false);
-      if (error) {
-        setMessage({ text: error.message, type: "error" });
-      } else if (data.session) {
-        setMessage({ text: "Account created successfully! Redirecting...", type: "success" });
-        setTimeout(() => {
-          router.push("/");
-          router.refresh();
-        }, 1000);
-      } else {
-        setMessage({
-          text: "Registration submitted! Check your email to confirm your account.",
-          type: "success",
         });
-      }
-    } else {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
 
-      setLoading(false);
-      if (error) {
-        setMessage({ text: error.message, type: "error" });
+        setLoading(false);
+        if (error) {
+          setMessage({ text: error.message, type: "error" });
+        } else if (data.session) {
+          setMessage({ text: "Account created successfully! Redirecting...", type: "success" });
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 1000);
+        } else {
+          setMessage({
+            text: "Registration submitted! Check your email to confirm your account.",
+            type: "success",
+          });
+        }
       } else {
-        setMessage({ text: "Sign in successful! Redirecting...", type: "success" });
-        setTimeout(() => {
-          router.push("/");
-          router.refresh();
-        }, 800);
+        const { error } = await supabase.auth.signInWithPassword({
+          email,
+          password,
+        });
+
+        setLoading(false);
+        if (error) {
+          // Provide friendlier messages for common errors
+          let msg = error.message;
+          if (msg.toLowerCase().includes("invalid login credentials")) {
+            msg = "Incorrect email or password. Please try again.";
+          } else if (msg.toLowerCase().includes("email not confirmed")) {
+            msg = "Please confirm your email before signing in.";
+          } else if (msg.toLowerCase().includes("too many requests")) {
+            msg = "Too many attempts. Please wait a few minutes and try again.";
+          }
+          setMessage({ text: msg, type: "error" });
+        } else {
+          setMessage({ text: "Sign in successful! Redirecting...", type: "success" });
+          setTimeout(() => {
+            router.push("/");
+            router.refresh();
+          }, 800);
+        }
       }
+    } catch (err: unknown) {
+      setLoading(false);
+      const message =
+        err instanceof Error ? err.message : "An unexpected error occurred. Please try again.";
+      setMessage({ text: message, type: "error" });
     }
   };
 
