@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { MarkingLogic } from "@/types/exam";
 
 interface ExamMetadataFormProps {
