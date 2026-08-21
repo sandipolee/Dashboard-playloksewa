@@ -36,19 +36,22 @@ export async function middleware(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isLoginPage = request.nextUrl.pathname.startsWith("/login");
-  const isAuthCallback = request.nextUrl.pathname.startsWith("/auth");
-  const isApiRoute = request.nextUrl.pathname.startsWith("/api");
+  const { pathname } = request.nextUrl;
+  const isLoginPage = pathname.startsWith("/login");
+  const isLandingPage = pathname === "/landing" || pathname.startsWith("/landing/");
+  const isAuthCallback = pathname.startsWith("/auth");
+  const isApiRoute = pathname.startsWith("/api");
+  const isPublic = isLoginPage || isLandingPage || isAuthCallback || isApiRoute;
 
-  if (!user && !isLoginPage && !isAuthCallback && !isApiRoute) {
-    // Redirect unauthenticated user to login
+  if (!user && !isPublic) {
+    // Redirect unauthenticated users to the public landing page
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/landing";
     return NextResponse.redirect(url);
   }
 
-  if (user && isLoginPage) {
-    // Redirect authenticated user away from login to home
+  if (user && (isLoginPage || isLandingPage)) {
+    // Redirect authenticated users away from landing/login to dashboard
     const url = request.nextUrl.clone();
     url.pathname = "/";
     return NextResponse.redirect(url);
