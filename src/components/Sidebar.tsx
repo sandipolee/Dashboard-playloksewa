@@ -5,11 +5,13 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { useSidebar } from "./SidebarContext";
+import { useTheme } from "./ThemeContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
   const { isCollapsed, toggleSidebar } = useSidebar();
+  const { theme, resolvedTheme, toggleTheme } = useTheme();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -76,10 +78,10 @@ export default function Sidebar() {
       }`}
     >
       {/* Header / Brand */}
-      <div className="h-16 flex items-center justify-between px-3.5 border-b border-white/[0.06] shrink-0">
+      <div className="h-14 flex items-center justify-between px-3.5 border-b border-white/[0.06] shrink-0">
         <Link href="/" className="flex items-center gap-3 overflow-hidden">
-          <div className="size-9 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] flex items-center justify-center shadow-md shadow-[#534AB7]/30 shrink-0">
-            <span className="material-symbols-outlined text-white text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+          <div className="size-8 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] flex items-center justify-center shadow-md shadow-[#534AB7]/30 shrink-0">
+            <span className="material-symbols-outlined text-white text-[16px]" style={{ fontVariationSettings: "'FILL' 1" }}>
               rocket_launch
             </span>
           </div>
@@ -88,8 +90,8 @@ export default function Sidebar() {
               <h1 className="text-[13px] font-bold text-white leading-tight tracking-tight truncate">
                 Play Loksewa
               </h1>
-              <p className="text-[9.5px] text-[#6b7280] font-medium tracking-wide">
-                Practice & Exam Arena
+              <p className="text-[9px] text-[#6b7280] font-medium tracking-wide">
+                Admin & Arena
               </p>
             </div>
           )}
@@ -111,11 +113,11 @@ export default function Sidebar() {
       </div>
 
       {/* Navigation Links */}
-      <nav className="flex-1 overflow-y-auto custom-scrollbar py-4 px-2.5 flex flex-col gap-6">
+      <nav className="flex-1 overflow-y-auto custom-scrollbar py-3.5 px-2.5 flex flex-col gap-5">
         {sections.map((section) => (
           <div key={section.title} className="flex flex-col gap-1">
             {!isCollapsed ? (
-              <h3 className="px-3 text-[9px] font-bold uppercase tracking-[0.12em] text-[#6b7280]/60 mb-1">
+              <h3 className="px-3 text-[9px] font-bold uppercase tracking-[0.12em] text-[#6b7280]/60 mb-0.5">
                 {section.title}
               </h3>
             ) : (
@@ -132,19 +134,18 @@ export default function Sidebar() {
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
+                  className={`group relative flex items-center gap-3 px-3 py-2 rounded-xl text-[12px] font-semibold transition-all ${
                     isActive
                       ? "bg-[#534AB7]/20 text-[#c4b5fd] shadow-sm shadow-[#534AB7]/10 border border-[#534AB7]/40"
                       : "text-[#9ca3af] hover:text-white hover:bg-white/[0.05]"
                   } ${isCollapsed ? "justify-center px-0" : ""}`}
                 >
-                  {/* Left Accent indicator when active */}
                   {isActive && !isCollapsed && (
                     <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#7c75ff] rounded-r-full"></span>
                   )}
 
                   <span
-                    className={`material-symbols-outlined text-[19px] shrink-0 transition-transform group-hover:scale-110 ${
+                    className={`material-symbols-outlined text-[18px] shrink-0 transition-transform group-hover:scale-110 ${
                       isActive ? "text-[#a78bfa]" : "text-[#8c909f] group-hover:text-white"
                     }`}
                     style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
@@ -167,44 +168,49 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User Footer */}
+      {/* User & Theme Footer */}
       <div className="p-3 border-t border-white/[0.06] bg-[#0d0f15] shrink-0">
-        <div className={`flex items-center gap-2.5 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+        <div className={`flex items-center gap-2 ${isCollapsed ? "justify-center" : "justify-between"}`}>
           <div className="flex items-center gap-2.5 min-w-0">
-            <div className="size-8 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] text-white font-bold text-xs flex items-center justify-center shadow-sm shrink-0">
+            <div className="size-7 rounded-lg bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] text-white font-bold text-xs flex items-center justify-center shadow-sm shrink-0">
               {userInitial}
             </div>
             {!isCollapsed && (
               <div className="min-w-0">
-                <p className="text-[12px] font-semibold text-white truncate leading-tight">
+                <p className="text-[11.5px] font-semibold text-white truncate leading-tight">
                   {userDisplayName}
                 </p>
-                <p className="text-[9px] text-[#6b7280] truncate mt-0.5">
+                <p className="text-[8.5px] text-[#6b7280] truncate">
                   {userEmail || "Active Session"}
                 </p>
               </div>
             )}
           </div>
 
-          {!isCollapsed ? (
+          <div className="flex items-center gap-1">
+            {/* Quick Theme Switcher */}
             <button
               type="button"
-              onClick={handleSignOut}
-              className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
-              title="Sign Out"
+              onClick={toggleTheme}
+              className="p-1 rounded-lg text-[#9ca3af] hover:text-white hover:bg-white/[0.06] transition-colors"
+              title={`Current Theme: ${theme}. Click to switch to ${resolvedTheme === "dark" ? "Light" : "Dark"} mode.`}
             >
-              <span className="material-symbols-outlined text-[18px]">logout</span>
+              <span className="material-symbols-outlined text-[17px]">
+                {resolvedTheme === "dark" ? "light_mode" : "dark_mode"}
+              </span>
             </button>
-          ) : (
-            <button
-              type="button"
-              onClick={handleSignOut}
-              className="hidden group-hover:flex"
-              title="Sign Out"
-            >
-              <span className="material-symbols-outlined text-[16px] text-[#ef4444]">logout</span>
-            </button>
-          )}
+
+            {!isCollapsed && (
+              <button
+                type="button"
+                onClick={handleSignOut}
+                className="p-1 rounded-lg text-[#6b7280] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
+                title="Sign Out"
+              >
+                <span className="material-symbols-outlined text-[17px]">logout</span>
+              </button>
+            )}
+          </div>
         </div>
       </div>
     </aside>

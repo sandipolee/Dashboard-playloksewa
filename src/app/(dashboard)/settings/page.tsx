@@ -2,8 +2,10 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useTheme } from "@/components/ThemeContext";
 
 export default function GlobalSettings() {
+  const { theme, setTheme } = useTheme();
   const [maintenanceMode, setMaintenanceMode] = useState(false);
   const [noticeText, setNoticeText] = useState(
     "लोकसेवा आयोगको खरिदार तथा नायब सुब्बाको नयाँ पाठ्यक्रम अनुसारका सम्पूर्ण मोडल सेटहरू उपलब्ध छन्।"
@@ -26,7 +28,7 @@ export default function GlobalSettings() {
       )}
 
       {/* Top Header Bar */}
-      <header className="h-16 border-b border-white/[0.08] bg-[#141721] flex items-center justify-between px-6 shrink-0 select-none">
+      <header className="h-14 border-b border-white/[0.08] bg-[#141721] flex items-center justify-between px-6 shrink-0 select-none">
         <div className="flex items-center gap-2.5">
           <Link href="/" className="text-[12px] font-semibold text-[#6b7280] hover:text-white transition-colors">
             Dashboard
@@ -38,9 +40,102 @@ export default function GlobalSettings() {
 
       {/* Main Content Area */}
       <div className="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-6xl mx-auto w-full pb-16 space-y-6">
-        {/* Section 1: Mobile App Notice & Maintenance */}
-        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-6 shadow-sm">
+        {/* Section 1: Appearance & Theme Switcher */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm">
           <div className="flex items-center gap-2.5 mb-4">
+            <span className="material-symbols-outlined text-[20px] text-[#a78bfa]">palette</span>
+            <div>
+              <h3 className="text-[14px] font-bold text-white">Appearance & Theme (थिम छनौट)</h3>
+              <p className="text-[11px] text-[#6b7280]">Customize the console interface between Dark and Light mode.</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            {/* Dark Mode Card */}
+            <div
+              onClick={() => setTheme("dark")}
+              className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                theme === "dark"
+                  ? "bg-[#534AB7]/15 border-[#7c75ff] shadow-md shadow-[#534AB7]/20 ring-1 ring-[#7c75ff]"
+                  : "bg-[#10131a] border-white/[0.06] hover:border-white/[0.15]"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#c4b5fd]">dark_mode</span>
+                  <span className="text-[13px] font-bold text-white">Dark Theme</span>
+                </div>
+                {theme === "dark" && (
+                  <span className="size-2 rounded-full bg-[#7c75ff] animate-pulse"></span>
+                )}
+              </div>
+              <p className="text-[10.5px] text-[#9ca3af] mb-3 leading-relaxed">
+                Deep slate dark layout with rich purple glowing accents.
+              </p>
+              <div className="h-4 rounded bg-[#0f1117] border border-white/[0.1] flex items-center px-1.5 gap-1">
+                <span className="size-2 rounded-full bg-[#534AB7]"></span>
+                <span className="size-2 rounded-full bg-[#22c55e]"></span>
+              </div>
+            </div>
+
+            {/* Light Mode Card */}
+            <div
+              onClick={() => setTheme("light")}
+              className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                theme === "light"
+                  ? "bg-[#534AB7]/15 border-[#7c75ff] shadow-md shadow-[#534AB7]/20 ring-1 ring-[#7c75ff]"
+                  : "bg-[#10131a] border-white/[0.06] hover:border-white/[0.15]"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#fbbf24]">light_mode</span>
+                  <span className="text-[13px] font-bold text-white">Light Theme</span>
+                </div>
+                {theme === "light" && (
+                  <span className="size-2 rounded-full bg-[#7c75ff] animate-pulse"></span>
+                )}
+              </div>
+              <p className="text-[10.5px] text-[#9ca3af] mb-3 leading-relaxed">
+                Clean crisp editorial light background with high contrast.
+              </p>
+              <div className="h-4 rounded bg-[#ffffff] border border-black/[0.1] flex items-center px-1.5 gap-1">
+                <span className="size-2 rounded-full bg-[#534AB7]"></span>
+                <span className="size-2 rounded-full bg-[#0d9488]"></span>
+              </div>
+            </div>
+
+            {/* System Sync Card */}
+            <div
+              onClick={() => setTheme("system")}
+              className={`p-4 rounded-xl border cursor-pointer transition-all flex flex-col justify-between ${
+                theme === "system"
+                  ? "bg-[#534AB7]/15 border-[#7c75ff] shadow-md shadow-[#534AB7]/20 ring-1 ring-[#7c75ff]"
+                  : "bg-[#10131a] border-white/[0.06] hover:border-white/[0.15]"
+              }`}
+            >
+              <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2">
+                  <span className="material-symbols-outlined text-[20px] text-[#60a5fa]">devices</span>
+                  <span className="text-[13px] font-bold text-white">System Auto</span>
+                </div>
+                {theme === "system" && (
+                  <span className="size-2 rounded-full bg-[#7c75ff] animate-pulse"></span>
+                )}
+              </div>
+              <p className="text-[10.5px] text-[#9ca3af] mb-3 leading-relaxed">
+                Automatically matches your OS daylight / nighttime mode.
+              </p>
+              <div className="h-4 rounded bg-gradient-to-r from-[#0f1117] to-[#ffffff] border border-white/[0.1] flex items-center px-1.5 gap-1">
+                <span className="size-2 rounded-full bg-[#534AB7]"></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Section 2: Mobile App Notice Banner */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm">
+          <div className="flex items-center gap-2.5 mb-3.5">
             <span className="material-symbols-outlined text-[20px] text-[#a78bfa]">campaign</span>
             <div>
               <h3 className="text-[14px] font-bold text-white">Global Mobile App Notice Banner</h3>
@@ -72,9 +167,9 @@ export default function GlobalSettings() {
           </div>
         </div>
 
-        {/* Section 2: Service Maintenance & System Health */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+        {/* Section 3: Service Maintenance & System Health */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center justify-between mb-3">
                 <div className="flex items-center gap-2">
@@ -109,7 +204,7 @@ export default function GlobalSettings() {
             </div>
           </div>
 
-          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-6 shadow-sm flex flex-col justify-between">
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm flex flex-col justify-between">
             <div>
               <div className="flex items-center gap-2 mb-3">
                 <span className="material-symbols-outlined text-[20px] text-[#4ade80]">database</span>
@@ -129,8 +224,8 @@ export default function GlobalSettings() {
           </div>
         </div>
 
-        {/* Section 3: Admin & Editors Team */}
-        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-6 shadow-sm">
+        {/* Section 4: Editorial Team & Roles */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm">
           <div className="flex items-center justify-between mb-4">
             <div>
               <h3 className="text-[14px] font-bold text-white">Editorial Team & Role Permissions</h3>
