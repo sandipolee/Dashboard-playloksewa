@@ -1,17 +1,24 @@
 "use client";
 
 import { createContext, useContext, useState, useEffect, ReactNode } from "react";
+import { usePathname } from "next/navigation";
 
 interface SidebarContextType {
   isCollapsed: boolean;
   setIsCollapsed: (collapsed: boolean | ((prev: boolean) => boolean)) => void;
   toggleSidebar: () => void;
+  isMobileOpen: boolean;
+  setIsMobileOpen: (open: boolean) => void;
+  toggleMobileSidebar: () => void;
+  closeMobileSidebar: () => void;
 }
 
 const SidebarContext = createContext<SidebarContextType | undefined>(undefined);
 
 export function SidebarProvider({ children }: { children: ReactNode }) {
+  const pathname = usePathname();
   const [isCollapsed, setIsCollapsed] = useState<boolean>(false);
+  const [isMobileOpen, setIsMobileOpen] = useState<boolean>(false);
   const [mounted, setMounted] = useState<boolean>(false);
 
   useEffect(() => {
@@ -21,6 +28,11 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
       setIsCollapsed(saved === "true");
     }
   }, []);
+
+  // Auto-close mobile sidebar whenever pathname changes
+  useEffect(() => {
+    setIsMobileOpen(false);
+  }, [pathname]);
 
   const handleSetCollapsed = (value: boolean | ((prev: boolean) => boolean)) => {
     setIsCollapsed((prev) => {
@@ -34,12 +46,24 @@ export function SidebarProvider({ children }: { children: ReactNode }) {
     handleSetCollapsed((prev) => !prev);
   };
 
+  const toggleMobileSidebar = () => {
+    setIsMobileOpen((prev) => !prev);
+  };
+
+  const closeMobileSidebar = () => {
+    setIsMobileOpen(false);
+  };
+
   return (
     <SidebarContext.Provider
       value={{
         isCollapsed: mounted ? isCollapsed : false,
         setIsCollapsed: handleSetCollapsed,
         toggleSidebar,
+        isMobileOpen,
+        setIsMobileOpen,
+        toggleMobileSidebar,
+        closeMobileSidebar,
       }}
     >
       {children}

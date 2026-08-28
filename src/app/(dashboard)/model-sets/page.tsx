@@ -305,8 +305,8 @@ export default function ModelSets() {
               </Link>
             </div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-left">
+            <div className="overflow-x-auto custom-scrollbar">
+              <table className="w-full min-w-[650px] text-left">
                 <thead>
                   <tr className="border-b border-white/[0.06] bg-[#10131a]">
                     <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Set ID</th>
