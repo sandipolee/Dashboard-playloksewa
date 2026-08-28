@@ -10,6 +10,8 @@ interface ModelSetItem {
   category: string;
   duration: number;
   questionsCount: number;
+  positiveMark?: number;
+  negativeMark?: number;
   premium: boolean;
   status: string;
   createdAt?: string;
@@ -31,6 +33,7 @@ export default function ModelSets() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState<"All" | "Published" | "Draft">("All");
+  const [selectedCategory, setSelectedCategory] = useState<string>("All");
   const [toast, setToast] = useState<{ message: string; type: "success" | "error" } | null>(null);
 
   // View Questions Modal
@@ -66,7 +69,7 @@ export default function ModelSets() {
   }, []);
 
   const handleDelete = async (id: string, title: string) => {
-    if (!confirm(`Delete "${title}"? This will also remove all linked questions.`)) return;
+    if (!confirm(`Delete "${title}"? This will permanently remove all linked questions.`)) return;
     try {
       const res = await fetch(`/api/model-sets/${id}`, { method: "DELETE" });
       if (res.ok) {
@@ -92,30 +95,9 @@ export default function ModelSets() {
         setSets((prev) =>
           prev.map((s) => (s.id === set.id ? { ...s, status: newStatus } : s))
         );
-        showToast(`"${set.title}" → ${newStatus}`, "success");
+        showToast(`"${set.title}" status updated to ${newStatus}`, "success");
       } else {
         showToast("Failed to update status", "error");
-      }
-    } catch {
-      showToast("Network error while updating", "error");
-    }
-  };
-
-  const handleTogglePremium = async (set: ModelSetItem) => {
-    const newPremium = !set.premium;
-    try {
-      const res = await fetch(`/api/model-sets/${set.id}`, {
-        method: "PUT",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ premium: newPremium }),
-      });
-      if (res.ok) {
-        setSets((prev) =>
-          prev.map((s) => (s.id === set.id ? { ...s, premium: newPremium } : s))
-        );
-        showToast(`"${set.title}" → ${newPremium ? "PRO" : "FREE"}`, "success");
-      } else {
-        showToast("Failed to update type", "error");
       }
     } catch {
       showToast("Network error while updating", "error");
@@ -125,29 +107,37 @@ export default function ModelSets() {
   const handleViewQuestions = async (set: ModelSetItem) => {
     setViewingSet(set);
     setLoadingQuestions(true);
-    setViewQuestions([]);
     try {
       const res = await fetch(`/api/model-sets/${set.id}`);
       const json = await res.json();
       if (res.ok && json.data?.questions) {
         setViewQuestions(json.data.questions);
+      } else {
+        setViewQuestions([]);
       }
     } catch {
-      showToast("Failed to load questions", "error");
+      setViewQuestions([]);
     } finally {
       setLoadingQuestions(false);
     }
   };
 
-  // Filtering & Search
+  // Distinct categories from loaded sets
+  const categoriesList = ["All", ...Array.from(new Set(sets.map((s) => s.category).filter(Boolean)))];
+
   const filteredSets = sets.filter((s) => {
     const matchesSearch =
-      !search ||
       s.title.toLowerCase().includes(search.toLowerCase()) ||
       s.category.toLowerCase().includes(search.toLowerCase()) ||
       s.setId.toLowerCase().includes(search.toLowerCase());
-    const matchesStatus = filterStatus === "All" || s.status === filterStatus;
-    return matchesSearch && matchesStatus;
+
+    const matchesStatus =
+      filterStatus === "All" ? true : s.status.toLowerCase() === filterStatus.toLowerCase();
+
+    const matchesCategory =
+      selectedCategory === "All" ? true : s.category === selectedCategory;
+
+    return matchesSearch && matchesStatus && matchesCategory;
   });
 
   const publishedCount = sets.filter((s) => s.status === "Published").length;
@@ -155,300 +145,351 @@ export default function ModelSets() {
   const totalQuestions = sets.reduce((sum, s) => sum + s.questionsCount, 0);
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden select-none">
-      {/* Toast */}
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#0f1117]">
+      {/* Toast Alert */}
       {toast && (
         <div
-          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-lg border shadow-xl flex items-center gap-2 max-w-md text-xs font-semibold ${
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl border shadow-2xl flex items-center gap-2 max-w-md text-xs font-semibold backdrop-blur-md animate-in fade-in slide-in-from-top-2 duration-200 ${
             toast.type === "success"
-              ? "bg-[#0d9488]/20 border-[#0d9488] text-white"
-              : "bg-[#ef4444]/20 border-[#ef4444] text-white"
+              ? "bg-[#0d9488]/30 border-[#0d9488] text-[#5eead4]"
+              : "bg-[#ef4444]/30 border-[#ef4444] text-[#fca5a5]"
           }`}
         >
-          <span className="material-symbols-outlined text-[16px]">
+          <span className="material-symbols-outlined text-[18px]">
             {toast.type === "success" ? "check_circle" : "error"}
           </span>
           <span>{toast.message}</span>
         </div>
       )}
 
-      {/* Top Bar */}
-      <header className="h-12 border-b border-white/[0.06] bg-[#0f1117] flex items-center justify-between px-5 shrink-0">
-        <div className="flex items-center gap-2">
-          <Link href="/" className="text-[10px] font-semibold text-[#6b7280] hover:text-white transition-colors">
+      {/* Top Header Bar */}
+      <header className="h-16 border-b border-white/[0.08] bg-[#141721] flex items-center justify-between px-6 shrink-0 select-none">
+        <div className="flex items-center gap-2.5">
+          <Link href="/" className="text-[12px] font-semibold text-[#6b7280] hover:text-white transition-colors">
             Dashboard
           </Link>
-          <span className="text-[#3f4451] text-[10px]">/</span>
-          <span className="text-[10px] font-bold text-white">Exam Sets</span>
+          <span className="text-[#3f4451] text-[12px]">/</span>
+          <h2 className="text-[13px] font-bold text-white tracking-wide">Exam Model Sets</h2>
         </div>
-        <div className="flex items-center gap-1.5">
-          <button className="p-1 text-[#6b7280] hover:text-white rounded hover:bg-white/5 relative">
-            <span className="material-symbols-outlined text-[16px]">notifications</span>
-            <span className="absolute top-0.5 right-0.5 size-1.5 bg-[#ef4444] rounded-full border border-[#0f1117]"></span>
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={fetchSets}
+            disabled={loading}
+            className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.06] text-[#9ca3af] hover:text-white text-[11px] font-semibold transition-all disabled:opacity-50"
+          >
+            <span className={`material-symbols-outlined text-[16px] ${loading ? "animate-spin text-[#a78bfa]" : ""}`}>
+              refresh
+            </span>
+            Refresh
           </button>
-          <div className="size-5 rounded-full bg-[#534AB7]/30 border border-[#534AB7]/50 ml-0.5"></div>
+          
+          <Link
+            href="/model-sets/create"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#534AB7] to-[#6358d4] hover:from-[#6358d4] hover:to-[#756cf0] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-[#534AB7]/25 transition-all transform active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[16px]">add</span>
+            Create Exam Set
+          </Link>
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 pb-10">
-        {/* Page Header */}
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-[16px] font-bold text-white mb-0.5">Model Sets Management</h1>
-            <p className="text-[11px] text-[#6b7280]">
-              Configure, preview, and publish examination bundles.
-              {!loading && <span className="text-[#22c55e] ml-1">● Supabase Connected</span>}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={fetchSets}
-              disabled={loading}
-              className="flex items-center gap-1.5 px-3 py-[6px] bg-[#1e222d] border border-white/[0.06] text-[10px] font-semibold text-[#9ca3af] rounded-md hover:bg-[#282d3d] transition-all disabled:opacity-50"
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-7xl mx-auto w-full pb-16">
+        {/* Stats Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+          {[
+            { label: "TOTAL MODEL SETS", value: sets.length, icon: "assignment", color: "from-[#534AB7] to-[#7c75ff]" },
+            { label: "PUBLISHED EXAMS", value: publishedCount, icon: "check_circle", color: "from-[#22c55e] to-[#4ade80]" },
+            { label: "DRAFTS IN PIPELINE", value: draftCount, icon: "edit_document", color: "from-[#d97706] to-[#fbbf24]" },
+            { label: "TOTAL QUESTIONS", value: totalQuestions, icon: "quiz", color: "from-[#3b82f6] to-[#60a5fa]" },
+          ].map((stat) => (
+            <div
+              key={stat.label}
+              className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm"
             >
-              <span className={`material-symbols-outlined text-[13px] ${loading ? "animate-spin" : ""}`}>refresh</span>
-              Refresh
-            </button>
-            <Link
-              href="/model-sets/create"
-              className="flex items-center gap-1.5 px-4 py-[6px] bg-gradient-to-r from-[#534AB7] to-[#6C63FF] text-white text-[10px] font-bold rounded-md shadow-md shadow-[#534AB7]/20 hover:shadow-[#534AB7]/40 transition-all transform active:scale-95"
-            >
-              <span className="material-symbols-outlined text-[13px]">add</span>
-              Create New Set
-            </Link>
-          </div>
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">{stat.label}</p>
+                <p className="text-[24px] font-bold text-white font-headline leading-tight">{stat.value}</p>
+              </div>
+              <div className={`size-10 rounded-xl bg-gradient-to-tr ${stat.color} flex items-center justify-center text-white shadow-sm`}>
+                <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5">
-            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">Total Sets</p>
-            <p className="text-[22px] font-bold text-white font-headline">{sets.length}</p>
-          </div>
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5">
-            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">Published</p>
-            <p className="text-[22px] font-bold text-[#22c55e] font-headline">{publishedCount}</p>
-          </div>
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5">
-            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">Drafts</p>
-            <p className="text-[22px] font-bold text-[#d97706] font-headline">{draftCount}</p>
-          </div>
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5">
-            <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">Total Questions</p>
-            <p className="text-[22px] font-bold text-[#a78bfa] font-headline">{totalQuestions}</p>
-          </div>
-        </div>
-
-        {/* Search & Filter Bar */}
-        <div className="flex items-center gap-3 mb-4">
-          <div className="relative flex-1 max-w-xs">
-            <span className="material-symbols-outlined text-[16px] text-[#6b7280] absolute left-3 top-1/2 -translate-y-1/2">search</span>
+        {/* Search & Filter Controls */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+          {/* Search Input */}
+          <div className="relative flex-1 min-w-[260px] max-w-md">
+            <span className="material-symbols-outlined text-[18px] text-[#6b7280] absolute left-3.5 top-1/2 -translate-y-1/2">
+              search
+            </span>
             <input
               type="text"
-              placeholder="Search by title, category, or ID..."
+              placeholder="Search by title, subject category, or Set ID..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-3 py-[6px] bg-[#1e222d] border border-white/[0.06] rounded-md text-[11px] text-white placeholder:text-[#6b7280] focus:outline-none focus:border-[#534AB7]/40 transition-colors"
+              className="w-full bg-[#10131a] border border-white/[0.08] focus:border-[#534AB7]/70 focus:ring-1 focus:ring-[#534AB7]/30 rounded-xl pl-10 pr-4 py-2 text-[12.5px] text-white placeholder:text-[#4b5262] focus:outline-none transition-all"
             />
           </div>
-          <div className="flex items-center gap-1">
-            {(["All", "Published", "Draft"] as const).map((f) => (
-              <button
-                key={f}
-                onClick={() => setFilterStatus(f)}
-                className={`px-3 py-[5px] rounded-md text-[10px] font-semibold transition-all ${
-                  filterStatus === f
-                    ? "bg-[#534AB7]/20 text-[#a78bfa] border border-[#534AB7]/30"
-                    : "text-[#6b7280] hover:text-white hover:bg-white/[0.04] border border-transparent"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Status Filter */}
+            <div className="flex bg-[#10131a] p-1 rounded-xl border border-white/[0.06]">
+              {(["All", "Published", "Draft"] as const).map((s) => (
+                <button
+                  key={s}
+                  type="button"
+                  onClick={() => setFilterStatus(s)}
+                  className={`px-3 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all ${
+                    filterStatus === s
+                      ? "bg-[#534AB7] text-white shadow-sm"
+                      : "text-[#6b7280] hover:text-white"
+                  }`}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
+            {/* Category Filter Dropdown */}
+            {categoriesList.length > 2 && (
+              <div className="relative">
+                <select
+                  value={selectedCategory}
+                  onChange={(e) => setSelectedCategory(e.target.value)}
+                  className="bg-[#10131a] border border-white/[0.08] text-[11px] font-bold text-[#d1d5db] rounded-xl px-3.5 py-2 pr-8 appearance-none focus:outline-none focus:border-[#534AB7]/70 cursor-pointer"
+                >
+                  {categoriesList.map((cat) => (
+                    <option key={cat} value={cat} className="bg-[#161922] text-white">
+                      {cat === "All" ? "All Categories" : cat}
+                    </option>
+                  ))}
+                </select>
+                <span className="material-symbols-outlined text-[16px] text-[#6b7280] absolute right-2.5 top-1/2 -translate-y-1/2 pointer-events-none">
+                  expand_more
+                </span>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Table */}
-        <div className="bg-[#161922] border border-white/[0.04] rounded-lg overflow-hidden">
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/[0.06]">
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Set ID</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Title</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Category</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-center">Questions</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-center">Type</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Status</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              {loading ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="material-symbols-outlined text-[24px] text-[#534AB7] animate-spin">progress_activity</span>
-                      <span className="text-xs text-[#6b7280]">Loading from Supabase...</span>
-                    </div>
-                  </td>
-                </tr>
-              ) : filteredSets.length === 0 ? (
-                <tr>
-                  <td colSpan={7} className="px-4 py-12 text-center">
-                    <div className="flex flex-col items-center gap-2">
-                      <span className="material-symbols-outlined text-[28px] text-[#3f4451]">inbox</span>
-                      <span className="text-xs text-[#6b7280]">
-                        {search || filterStatus !== "All"
-                          ? "No model sets match your filters."
-                          : "No model sets yet. Click \"Create New Set\" to get started!"}
-                      </span>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                filteredSets.map((set) => {
-                  const isPublished = set.status === "Published";
-                  return (
-                    <tr key={set.id} className="hover:bg-white/[0.02] transition-colors group">
-                      <td className="px-4 py-3 text-[10px] font-mono font-semibold text-[#6b7280]">{set.setId}</td>
-                      <td className="px-4 py-3">
-                        <span className="text-[11px] font-semibold text-white">{set.title}</span>
-                      </td>
-                      <td className="px-4 py-3 text-[11px] text-[#9ca3af]">{set.category}</td>
-                      <td className="px-4 py-3 text-center text-[11px] font-bold text-white">{set.questionsCount}</td>
-                      <td className="px-4 py-3 text-center">
-                        <button
-                          onClick={() => handleTogglePremium(set)}
-                          className={`px-2 py-px rounded text-[8px] font-bold uppercase tracking-wider cursor-pointer transition-all hover:scale-105 ${
-                            set.premium
-                              ? "bg-[#534AB7]/15 text-[#a78bfa] border border-[#534AB7]/20 hover:bg-[#534AB7]/25"
-                              : "bg-[#22c55e]/15 text-[#22c55e] border border-[#22c55e]/20 hover:bg-[#22c55e]/25"
-                          }`}
-                          title="Click to toggle PRO / FREE"
-                        >
-                          {set.premium ? "PRO" : "FREE"}
-                        </button>
-                      </td>
-                      <td className="px-4 py-3">
-                        <button
-                          onClick={() => handleToggleStatus(set)}
-                          className="flex items-center gap-1 cursor-pointer group/status"
-                          title="Click to toggle status"
-                        >
-                          <span className={`size-1.5 rounded-full transition-colors ${isPublished ? "bg-[#22c55e]" : "bg-[#d97706]"}`}></span>
-                          <span className={`text-[10px] font-medium transition-colors group-hover/status:underline ${isPublished ? "text-[#22c55e]" : "text-[#d97706]"}`}>
-                            {set.status}
+        {/* Model Sets Data Table */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl overflow-hidden shadow-sm">
+          {loading ? (
+            <div className="p-16 flex flex-col items-center justify-center">
+              <span className="material-symbols-outlined text-[36px] text-[#534AB7] animate-spin mb-3">
+                progress_activity
+              </span>
+              <p className="text-[12px] text-[#9ca3af] font-medium">Loading examination bundles from database...</p>
+            </div>
+          ) : filteredSets.length === 0 ? (
+            <div className="p-16 flex flex-col items-center justify-center text-center">
+              <div className="size-14 rounded-2xl bg-[#534AB7]/10 flex items-center justify-center text-[#a78bfa] mb-3">
+                <span className="material-symbols-outlined text-[28px]">assignment_late</span>
+              </div>
+              <h3 className="text-[15px] font-bold text-white mb-1">No Model Sets Found</h3>
+              <p className="text-[12px] text-[#6b7280] max-w-sm mb-5">
+                {search || filterStatus !== "All" || selectedCategory !== "All"
+                  ? "No sets match your current filters. Try resetting your search."
+                  : "No model sets have been created yet. Create your first exam bundle now."}
+              </p>
+              <Link
+                href="/model-sets/create"
+                className="px-4 py-2 bg-[#534AB7] hover:bg-[#6358d4] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-md shadow-[#534AB7]/20"
+              >
+                + Create First Set
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/[0.06] bg-[#10131a]">
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Set ID</th>
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Exam Title & Category</th>
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Questions</th>
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Duration</th>
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Status</th>
+                    <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {filteredSets.map((set) => {
+                    const isPublished = set.status === "Published";
+                    return (
+                      <tr key={set.id} className="hover:bg-white/[0.02] transition-colors group">
+                        <td className="px-5 py-4">
+                          <span className="px-2.5 py-1 rounded-lg bg-white/[0.04] border border-white/[0.06] text-[11px] font-mono font-bold text-[#c4b5fd]">
+                            {set.setId}
                           </span>
-                        </button>
-                      </td>
-                      <td className="px-4 py-3 text-right">
-                        <div className="flex items-center gap-1 justify-end">
+                        </td>
+                        <td className="px-5 py-4">
+                          <div>
+                            <p className="text-[13px] font-semibold text-white group-hover:text-[#a78bfa] transition-colors">
+                              {set.title}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="px-2 py-0.5 rounded text-[9.5px] font-bold bg-[#534AB7]/15 text-[#a78bfa] border border-[#534AB7]/30">
+                                {set.category || "General"}
+                              </span>
+                              {set.premium && (
+                                <span className="px-2 py-0.5 rounded text-[9.5px] font-bold bg-[#d97706]/15 text-[#fbbf24] border border-[#d97706]/30">
+                                  PREMIUM
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </td>
+                        <td className="px-5 py-4">
                           <button
+                            type="button"
                             onClick={() => handleViewQuestions(set)}
-                            className="p-1 text-[#6b7280] hover:text-[#a78bfa] rounded hover:bg-white/5 transition-colors opacity-0 group-hover:opacity-100"
-                            title="View Questions"
+                            className="flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-white/[0.04] hover:bg-[#534AB7]/20 border border-white/[0.06] hover:border-[#534AB7]/40 text-[11px] font-semibold text-[#d1d5db] hover:text-white transition-all"
+                            title="Inspect Linked Questions"
                           >
-                            <span className="material-symbols-outlined text-[15px]">visibility</span>
+                            <span className="material-symbols-outlined text-[14px] text-[#a78bfa]">quiz</span>
+                            <span>{set.questionsCount} items</span>
                           </button>
-                          <Link
-                            href={`/model-sets/create?id=${set.id}`}
-                            className="p-1 text-[#6b7280] hover:text-[#3b82f6] rounded hover:bg-white/5 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Edit Model Set"
-                          >
-                            <span className="material-symbols-outlined text-[15px]">edit</span>
-                          </Link>
+                        </td>
+                        <td className="px-5 py-4 text-[12px] text-[#9ca3af] font-medium">
+                          {set.duration} Mins
+                        </td>
+                        <td className="px-5 py-4">
                           <button
-                            onClick={() => handleDelete(set.id, set.title)}
-                            className="p-1 text-[#6b7280] hover:text-[#ef4444] rounded hover:bg-white/5 transition-colors opacity-0 group-hover:opacity-100"
-                            title="Delete Model Set"
+                            type="button"
+                            onClick={() => handleToggleStatus(set)}
+                            className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase tracking-wider border transition-all ${
+                              isPublished
+                                ? "bg-[#22c55e]/15 border-[#22c55e]/30 text-[#4ade80] hover:bg-[#22c55e]/25"
+                                : "bg-[#d97706]/15 border-[#d97706]/30 text-[#fbbf24] hover:bg-[#d97706]/25"
+                            }`}
+                            title="Click to toggle status"
                           >
-                            <span className="material-symbols-outlined text-[15px]">delete</span>
+                            {set.status}
                           </button>
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+                        </td>
+                        <td className="px-5 py-4 text-right">
+                          <div className="flex items-center justify-end gap-1.5">
+                            <Link
+                              href={`/model-sets/create?id=${set.id}`}
+                              className="p-1.5 rounded-lg text-[#9ca3af] hover:text-white hover:bg-white/[0.08] transition-all"
+                              title="Edit Set & Questions"
+                            >
+                              <span className="material-symbols-outlined text-[17px]">edit</span>
+                            </Link>
+                            <button
+                              type="button"
+                              onClick={() => handleDelete(set.id, set.title)}
+                              className="p-1.5 rounded-lg text-[#9ca3af] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-all"
+                              title="Delete Model Set"
+                            >
+                              <span className="material-symbols-outlined text-[17px]">delete</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* View Questions Modal */}
+      {/* Questions Modal Drawer */}
       {viewingSet && (
-        <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-6" onClick={() => setViewingSet(null)}>
-          <div
-            className="w-full max-w-2xl max-h-[80vh] bg-[#161922] border border-white/[0.08] rounded-xl shadow-2xl flex flex-col overflow-hidden"
-            onClick={(e) => e.stopPropagation()}
-          >
-            {/* Modal Header */}
-            <div className="flex items-center justify-between px-5 py-3.5 border-b border-white/[0.06] shrink-0">
+        <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-150">
+          <div className="bg-[#141721] border border-white/[0.1] rounded-2xl w-full max-w-2xl max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+            <div className="px-6 py-4 border-b border-white/[0.08] flex items-center justify-between bg-[#10131a]">
               <div>
-                <h2 className="text-[13px] font-bold text-white">{viewingSet.title}</h2>
-                <p className="text-[10px] text-[#6b7280]">
-                  {viewingSet.setId} · {viewingSet.category} · {viewingSet.questionsCount} questions
+                <h3 className="text-[15px] font-bold text-white">{viewingSet.title}</h3>
+                <p className="text-[11px] text-[#6b7280]">
+                  {viewingSet.setId} · {viewingSet.category} · {viewQuestions.length} Questions
                 </p>
               </div>
               <button
+                type="button"
                 onClick={() => setViewingSet(null)}
-                className="p-1.5 rounded-md text-[#6b7280] hover:text-white hover:bg-white/5 transition-colors"
+                className="p-1.5 rounded-lg text-[#6b7280] hover:text-white hover:bg-white/[0.06] transition-colors"
               >
-                <span className="material-symbols-outlined text-[16px]">close</span>
+                <span className="material-symbols-outlined text-[20px]">close</span>
               </button>
             </div>
 
-            {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar p-5">
+            <div className="flex-1 overflow-y-auto custom-scrollbar p-6 flex flex-col gap-4">
               {loadingQuestions ? (
-                <div className="flex items-center justify-center py-12">
-                  <span className="material-symbols-outlined text-[24px] text-[#534AB7] animate-spin">progress_activity</span>
+                <div className="py-12 flex flex-col items-center justify-center">
+                  <span className="material-symbols-outlined text-[32px] text-[#534AB7] animate-spin mb-2">
+                    progress_activity
+                  </span>
+                  <p className="text-[11px] text-[#9ca3af]">Loading questions...</p>
                 </div>
               ) : viewQuestions.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-12 gap-2">
-                  <span className="material-symbols-outlined text-[28px] text-[#3f4451]">quiz</span>
-                  <span className="text-xs text-[#6b7280]">No questions found for this model set.</span>
+                <div className="py-12 text-center text-[#6b7280]">
+                  <p className="text-[12px]">No questions linked to this set.</p>
                 </div>
               ) : (
-                <div className="flex flex-col gap-3">
-                  {viewQuestions.map((q, idx) => (
-                    <div key={q.id} className="bg-[#1e222d] rounded-lg p-4 border border-white/[0.04]">
-                      <div className="flex items-start gap-3 mb-2">
-                        <span className="text-[10px] font-bold text-[#534AB7] bg-[#534AB7]/10 px-2 py-0.5 rounded-full shrink-0">
-                          Q{(idx + 1).toString().padStart(2, "0")}
-                        </span>
-                        <div className="flex-1">
-                          <p className="text-[12px] font-semibold text-white leading-relaxed font-[Mukta]">
-                            {q.text_np || <span className="text-[#3f4451] italic">No Nepali text</span>}
-                          </p>
-                          {q.text_en && (
-                            <p className="text-[10px] text-[#9ca3af] italic mt-0.5">{q.text_en}</p>
-                          )}
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-2 gap-1.5 ml-9">
-                        {(q.options || []).map((opt) => {
-                          const isCorrect = q.correct_option_id === opt.id;
-                          return (
-                            <div
-                              key={opt.id}
-                              className={`flex items-center gap-2 px-2.5 py-1.5 rounded-md border text-[10px] ${
-                                isCorrect
-                                  ? "bg-[#0d9488]/10 border-[#0d9488]/30 text-[#5eead4]"
-                                  : "bg-[#161922] border-white/[0.04] text-[#9ca3af]"
-                              }`}
-                            >
-                              <span className="font-bold text-[9px]">{opt.id}</span>
-                              <span className="font-[Mukta] text-[10px]">{opt.textNp || opt.textEn || "..."}</span>
-                              {isCorrect && <span className="material-symbols-outlined text-[12px] text-[#0d9488] ml-auto">check</span>}
-                            </div>
-                          );
-                        })}
-                      </div>
+                viewQuestions.map((q, idx) => (
+                  <div key={q.id || idx} className="bg-[#10131a] p-4 rounded-xl border border-white/[0.06]">
+                    <div className="flex items-center gap-2 mb-2">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-[#534AB7]/20 text-[#c4b5fd]">
+                        Q{(idx + 1).toString().padStart(2, "0")}
+                      </span>
+                      <span className="px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider bg-white/[0.04] text-[#9ca3af]">
+                        {q.difficulty || "Easy"}
+                      </span>
+                      <span className="text-[10px] text-[#6b7280]">
+                        Ans: <strong className="text-[#a78bfa]">{q.correct_option_id}</strong>
+                      </span>
                     </div>
-                  ))}
-                </div>
+
+                    <p className="text-[13px] font-semibold text-white font-[Mukta] leading-relaxed mb-1">
+                      {q.text_np}
+                    </p>
+                    {q.text_en && <p className="text-[11px] text-[#9ca3af] italic mb-3">{q.text_en}</p>}
+
+                    <div className="grid grid-cols-2 gap-2 mt-2">
+                      {(q.options || []).map((opt) => {
+                        const isCorrect = q.correct_option_id === opt.id;
+                        return (
+                          <div
+                            key={opt.id}
+                            className={`p-2 rounded-lg text-[11px] border ${
+                              isCorrect
+                                ? "bg-[#534AB7]/20 border-[#534AB7] text-[#c4b5fd] font-medium"
+                                : "bg-[#141721] border-white/[0.04] text-[#9ca3af]"
+                            }`}
+                          >
+                            <span className="font-bold mr-1.5">{opt.id}.</span>
+                            <span className="font-[Mukta]">{opt.textNp || opt.textEn}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))
               )}
+            </div>
+
+            <div className="px-6 py-3.5 border-t border-white/[0.08] bg-[#10131a] flex justify-between items-center">
+              <Link
+                href={`/model-sets/create?id=${viewingSet.id}`}
+                className="px-4 py-2 bg-[#534AB7] hover:bg-[#6358d4] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all shadow-md shadow-[#534AB7]/20"
+              >
+                Edit in Exam Builder
+              </Link>
+              <button
+                type="button"
+                onClick={() => setViewingSet(null)}
+                className="px-4 py-2 text-[11px] font-semibold text-[#9ca3af] hover:text-white transition-colors"
+              >
+                Close
+              </button>
             </div>
           </div>
         </div>

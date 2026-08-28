@@ -1,102 +1,132 @@
 "use client";
 
+import { useState } from "react";
+import Link from "next/link";
+
 export default function Revenue() {
+  const [timeframe, setTimeframe] = useState<"7D" | "30D" | "1Y">("30D");
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      <header className="h-10 border-b border-white/[0.06] bg-[#0f1117] flex items-center justify-between px-5 shrink-0">
-        <div className="relative w-[200px]">
-          <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#3f4451] text-[14px]">search</span>
-          <input className="w-full bg-[#1e222d] border border-white/[0.06] rounded-md pl-8 pr-3 py-[4px] text-[11px] text-[#9ca3af] placeholder:text-[#3f4451] focus:outline-none focus:border-[#534AB7]/40 transition-all" placeholder="Search..." type="text" />
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#0f1117]">
+      {/* Top Header Bar */}
+      <header className="h-16 border-b border-white/[0.08] bg-[#141721] flex items-center justify-between px-6 shrink-0 select-none">
+        <div className="flex items-center gap-2.5">
+          <Link href="/" className="text-[12px] font-semibold text-[#6b7280] hover:text-white transition-colors">
+            Dashboard
+          </Link>
+          <span className="text-[#3f4451] text-[12px]">/</span>
+          <h2 className="text-[13px] font-bold text-white tracking-wide">Revenue & Subscriptions</h2>
         </div>
-        <button className="p-1 text-[#6b7280] hover:text-white rounded hover:bg-white/5"><span className="material-symbols-outlined text-[17px]">notifications</span></button>
+
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-[#10131a] p-1 rounded-xl border border-white/[0.06]">
+            {(["7D", "30D", "1Y"] as const).map((t) => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTimeframe(t)}
+                className={`px-3 py-1 text-[10px] font-bold rounded-lg transition-all ${
+                  timeframe === t
+                    ? "bg-[#534AB7] text-white shadow-sm"
+                    : "text-[#6b7280] hover:text-white"
+                }`}
+              >
+                {t}
+              </button>
+            ))}
+          </div>
+
+          <button
+            type="button"
+            className="flex items-center gap-1.5 px-4 py-2 bg-gradient-to-r from-[#534AB7] to-[#6358d4] hover:from-[#6358d4] hover:to-[#756cf0] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-lg shadow-[#534AB7]/25 transition-all"
+          >
+            <span className="material-symbols-outlined text-[16px]">download</span>
+            Export Statement
+          </button>
+        </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 pb-10">
-        <div className="flex items-center justify-between mb-5">
-          <div>
-            <h1 className="text-[16px] font-bold text-white mb-0.5">Revenue & Subscriptions</h1>
-            <p className="text-[11px] text-[#6b7280]">Financial overview and active subscription metrics.</p>
-          </div>
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-0.5 bg-[#1e222d] rounded-md p-0.5 border border-white/[0.06]">
-              <button className="px-2.5 py-[3px] text-[9px] font-bold text-[#6b7280] rounded hover:text-white">7D</button>
-              <button className="px-2.5 py-[3px] text-[9px] font-bold text-white bg-[#534AB7] rounded shadow-sm">30D</button>
-              <button className="px-2.5 py-[3px] text-[9px] font-bold text-[#6b7280] rounded hover:text-white">1Y</button>
-            </div>
-            <button className="flex items-center gap-1.5 px-3 py-[5px] bg-[#534AB7] text-white text-[10px] font-bold rounded-md shadow-md shadow-[#534AB7]/20 hover:bg-[#6358d4] transition-all">
-              <span className="material-symbols-outlined text-[13px]">download</span>Export Report
-            </button>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-4 gap-3 mb-5">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-7xl mx-auto w-full pb-16">
+        {/* Metric Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
           {[
-            { label: "TOTAL REVENUE (30D)", value: "Rs 1.24M", change: "+12.4%", sparkline: true },
-            { label: "ACTIVE SUBS", value: "4,821", change: "+5.2%", sub: "Basic: 65%    Pro: 35%" },
-            { label: "AVG REV PER USER", value: "Rs 257", change: "+1.1%" },
-            { label: "CHURN RATE (30D)", value: "2.4%", change: "+0.3%" },
+            { label: "MONTHLY GROSS REVENUE", value: "Rs 1.84M", change: "+14.8%", icon: "account_balance", color: "from-[#22c55e] to-[#4ade80]" },
+            { label: "ACTIVE SUBSCRIBERS", value: "4,820", change: "+6.2%", icon: "card_membership", color: "from-[#534AB7] to-[#7c75ff]" },
+            { label: "AVERAGE REV PER USER", value: "Rs 382", change: "+2.4%", icon: "payments", color: "from-[#3b82f6] to-[#60a5fa]" },
+            { label: "RENEWAL CHURN RATE", value: "1.8%", sub: "Healthy (<2.5%)", icon: "sync_alt", color: "from-[#0d9488] to-[#2dd4bf]" },
           ].map((stat) => (
-            <div key={stat.label} className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5">
-              <p className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-2">{stat.label}</p>
-              <div className="flex items-baseline gap-1.5 mb-1">
-                <span className="text-[20px] font-bold text-white font-headline">{stat.value}</span>
-                <span className="text-[9px] font-bold text-[#22c55e]">{stat.change}</span>
-              </div>
-              {stat.sparkline && (
-                <div className="flex items-end gap-[1.5px] h-[16px] mt-1">
-                  {[3,4,2,5,3,6,4,7,5,8,6,9,7,8,6,9].map((h,i) => (
-                    <div key={i} className="flex-1 bg-[#22c55e]/30 rounded-t" style={{ height: `${h*10}%` }}></div>
-                  ))}
+            <div
+              key={stat.label}
+              className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm"
+            >
+              <div>
+                <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">{stat.label}</p>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-[22px] font-bold text-white font-headline leading-tight">{stat.value}</span>
+                  {stat.change && (
+                    <span className="text-[10px] font-bold text-[#4ade80]">{stat.change}</span>
+                  )}
                 </div>
-              )}
-              {stat.sub && <p className="text-[9px] text-[#6b7280] mt-0.5">{stat.sub}</p>}
+                {stat.sub && <p className="text-[9.5px] text-[#4ade80] mt-0.5">{stat.sub}</p>}
+              </div>
+              <div className={`size-10 rounded-xl bg-gradient-to-tr ${stat.color} flex items-center justify-center text-white shadow-sm`}>
+                <span className="material-symbols-outlined text-[20px]">{stat.icon}</span>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="grid grid-cols-3 gap-4 mb-5">
-          <div className="col-span-2 bg-[#161922] border border-white/[0.04] rounded-lg p-4">
+        {/* Revenue Breakdown Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+          {/* Revenue Chart */}
+          <div className="lg:col-span-2 bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm">
             <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[12px] font-bold text-white">Revenue Growth</h3>
-              <button className="text-[#3f4451] hover:text-[#9ca3af]"><span className="material-symbols-outlined text-[16px]">more_horiz</span></button>
+              <div>
+                <h3 className="text-[14px] font-bold text-white mb-0.5">Revenue Growth Trend</h3>
+                <p className="text-[11px] text-[#6b7280]">Daily revenue volume generated from subscriptions & mock packs.</p>
+              </div>
+              <span className="text-[12px] font-bold text-[#4ade80] bg-[#22c55e]/10 border border-[#22c55e]/30 px-2.5 py-1 rounded-lg">
+                +14.8% vs last month
+              </span>
             </div>
-            <div className="flex gap-2 h-[190px]">
-              <div className="flex flex-col justify-between text-[8px] text-[#3f4451] font-medium py-1">
-                <span>Rs 50k</span><span>Rs 40k</span><span>Rs 30k</span><span>Rs 20k</span><span>Rs 10k</span><span>0</span>
-              </div>
-              <div className="flex-1 flex items-end justify-around gap-2 border-l border-b border-white/[0.04] px-2 pb-4 relative">
-                {[55,65,45,70,80,90,75].map((h,i) => (
-                  <div key={i} className="flex-1 flex flex-col items-center gap-0">
-                    <div className="w-full max-w-[32px] bg-[#534AB7]/30 hover:bg-[#534AB7]/50 rounded-t transition-colors" style={{ height: `${h}%` }}></div>
+
+            <div className="h-[200px] flex items-end gap-[4px] px-2 pt-4">
+              {[35, 45, 40, 55, 60, 50, 65, 75, 70, 85, 80, 95, 60, 75, 85, 70, 90, 100, 80, 90, 85, 95, 90, 100, 85, 90, 95, 100, 90, 95].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 group/bar relative">
+                  <div
+                    className="w-full bg-[#0d9488]/30 hover:bg-[#2dd4bf] rounded-t transition-all cursor-pointer"
+                    style={{ height: `${h}%` }}
+                  ></div>
+                  <div className="absolute -top-7 px-1.5 py-0.5 rounded bg-[#1a1e2b] text-[9px] font-bold text-white border border-white/[0.1] opacity-0 group-hover/bar:opacity-100 transition-opacity pointer-events-none whitespace-nowrap z-20">
+                    Day {i + 1}: Rs {(h * 1200).toLocaleString()}
                   </div>
-                ))}
-                <div className="absolute bottom-0 left-0 right-0 flex justify-around px-2 -mb-4">
-                  {["Mon","Tue","Wed","Thu","Fri","Sat","Sun"].map((d) => <span key={d} className="text-[8px] text-[#6b7280]">{d}</span>)}
                 </div>
-              </div>
+              ))}
             </div>
           </div>
 
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-4">
-            <h3 className="text-[12px] font-bold text-white mb-4">Plan Distribution</h3>
-            <div className="flex flex-col gap-4">
+          {/* Subscriptions by Plan */}
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-5 shadow-sm flex flex-col justify-between">
+            <h3 className="text-[14px] font-bold text-white mb-3">Subscription Tier Share</h3>
+
+            <div className="flex flex-col gap-3.5">
               {[
-                { icon: "shield", iconBg: "bg-[#534AB7]/15 text-[#a78bfa]", name: "Pro Annual", pct: "42%", barW: "42%", barColor: "bg-[#534AB7]" },
-                { icon: "star", iconBg: "bg-[#d97706]/15 text-[#fbbf24]", name: "Pro Monthly", pct: "35%", barW: "35%", barColor: "bg-[#3b82f6]" },
-                { icon: "person", iconBg: "bg-[#6b7280]/15 text-[#9ca3af]", name: "Basic", pct: "23%", barW: "23%", barColor: "bg-[#6b7280]" },
-              ].map((plan) => (
-                <div key={plan.name} className="flex items-center gap-2.5">
-                  <div className={`size-7 rounded-lg ${plan.iconBg} flex items-center justify-center`}>
-                    <span className="material-symbols-outlined text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>{plan.icon}</span>
+                { plan: "Kharidar Exam Pass", price: "Rs 499", share: "45%", count: "2,169 users", color: "bg-[#534AB7]" },
+                { plan: "Nayab Subba Complete", price: "Rs 799", share: "35%", count: "1,687 users", color: "bg-[#0d9488]" },
+                { plan: "Officer All-Access VIP", price: "Rs 1,499", share: "20%", count: "964 users", color: "bg-[#d97706]" },
+              ].map((item) => (
+                <div key={item.plan} className="bg-[#10131a] p-3 rounded-xl border border-white/[0.04]">
+                  <div className="flex items-center justify-between mb-1.5">
+                    <span className="text-[12px] font-bold text-white">{item.plan}</span>
+                    <span className="text-[11px] font-bold text-[#c4b5fd]">{item.price}</span>
                   </div>
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between mb-1">
-                      <span className="text-[11px] font-semibold text-white">{plan.name}</span>
-                      <span className="text-[11px] font-bold text-white">{plan.pct}</span>
-                    </div>
-                    <div className="w-full h-[3px] bg-[#1e222d] rounded-full overflow-hidden">
-                      <div className={`h-full ${plan.barColor} rounded-full`} style={{ width: plan.barW }}></div>
-                    </div>
+                  <div className="w-full h-1.5 bg-white/[0.06] rounded-full overflow-hidden mb-1.5">
+                    <div className={`h-full ${item.color} rounded-full`} style={{ width: item.share }}></div>
+                  </div>
+                  <div className="flex justify-between text-[10px] text-[#6b7280]">
+                    <span>{item.count}</span>
+                    <span className="font-bold text-white">{item.share}</span>
                   </div>
                 </div>
               ))}
@@ -104,67 +134,47 @@ export default function Revenue() {
           </div>
         </div>
 
-        <div className="bg-[#161922] border border-white/[0.04] rounded-lg overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.04]">
-            <h3 className="text-[12px] font-bold text-white">Recent Transactions</h3>
-            <div className="flex items-center gap-2">
-              <div className="relative w-[150px]">
-                <span className="material-symbols-outlined absolute left-2 top-1/2 -translate-y-1/2 text-[#3f4451] text-[12px]">search</span>
-                <input className="w-full bg-[#1e222d] border border-white/[0.06] rounded pl-7 pr-2 py-1 text-[9px] text-[#9ca3af] placeholder:text-[#3f4451] focus:outline-none" placeholder="Filter..." type="text" />
-              </div>
-              <button className="flex items-center gap-1 px-2 py-1 border border-white/[0.06] rounded text-[9px] font-semibold text-[#9ca3af] hover:bg-white/[0.04]">
-                <span className="material-symbols-outlined text-[12px]">tune</span>Filter
-              </button>
-            </div>
+        {/* Transactions Table */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-4 border-b border-white/[0.06] flex items-center justify-between">
+            <h3 className="text-[14px] font-bold text-white">Recent Payment Transactions</h3>
+            <span className="text-[11px] text-[#6b7280]">All transactions synced with Nepali Payment Gateways</span>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/[0.04]">
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Transaction ID</th>
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">User</th>
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Plan</th>
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Amount</th>
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Date</th>
-                <th className="px-4 py-2 text-[8px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Status</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              {[
-                { id: "TRX-8921-A", name: "Ramesh Poudel", initial: "R", color: "bg-[#ef4444]", plan: "Pro Annual", planColor: "bg-[#534AB7]/15 text-[#a78bfa] border border-[#534AB7]/20", amount: "Rs 4,999", date: "Oct 24, 14:32", status: "Success", statusColor: "text-[#22c55e]" },
-                { id: "TRX-8920-B", name: "Sita Sharma", initial: "S", color: "bg-[#3b82f6]", plan: "Basic", planColor: "bg-[#6b7280]/15 text-[#9ca3af] border border-[#6b7280]/20", amount: "Rs 499", date: "Oct 24, 12:15", status: "Success", statusColor: "text-[#22c55e]" },
-                { id: "TRX-8919-C", name: "Kamal Thapa", initial: "K", color: "bg-[#22c55e]", plan: "Pro Monthly", planColor: "bg-[#3b82f6]/15 text-[#93c5fd] border border-[#3b82f6]/20", amount: "Rs 999", date: "Oct 24, 09:45", status: "Failed", statusColor: "text-[#ef4444]" },
-                { id: "TRX-8918-D", name: "Nita Gurung", initial: "N", color: "bg-[#d97706]", plan: "Pro Annual", planColor: "bg-[#534AB7]/15 text-[#a78bfa] border border-[#534AB7]/20", amount: "Rs 4,999", date: "Oct 23, 18:20", status: "Success", statusColor: "text-[#22c55e]" },
-              ].map((txn) => (
-                <tr key={txn.id} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-2.5 text-[10px] font-semibold text-[#6b7280]">{txn.id}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-2">
-                      <div className={`size-5 rounded-full ${txn.color} flex items-center justify-center text-[8px] font-bold text-white`}>{txn.initial}</div>
-                      <span className="text-[11px] font-medium text-white">{txn.name}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5"><span className={`px-1.5 py-px rounded text-[8px] font-bold ${txn.planColor}`}>{txn.plan}</span></td>
-                  <td className="px-4 py-2.5 text-[11px] font-bold text-white">{txn.amount}</td>
-                  <td className="px-4 py-2.5 text-[10px] text-[#6b7280]">{txn.date}</td>
-                  <td className="px-4 py-2.5 text-right">
-                    <div className="flex items-center gap-1 justify-end">
-                      <span className={`size-1.5 rounded-full ${txn.statusColor.replace("text-","bg-")}`}></span>
-                      <span className={`text-[10px] font-medium ${txn.statusColor}`}>{txn.status}</span>
-                    </div>
-                  </td>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="border-b border-white/[0.06] bg-[#10131a]">
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Transaction ID</th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Candidate</th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Plan Purchased</th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Gateway</th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Amount</th>
+                  <th className="px-5 py-3.5 text-[10px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Status</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-          <div className="px-4 py-2 border-t border-white/[0.04] flex items-center justify-between">
-            <span className="text-[9px] text-[#6b7280]">Showing 1 to 4 of 248 entries</span>
-            <div className="flex items-center gap-0.5">
-              <button className="p-0.5 text-[#3f4451] hover:text-white rounded"><span className="material-symbols-outlined text-[14px]">chevron_left</span></button>
-              <button className="size-5 rounded bg-[#534AB7] text-white text-[9px] font-bold">1</button>
-              <button className="size-5 rounded text-[#6b7280] hover:text-white text-[9px] font-bold hover:bg-white/[0.04]">2</button>
-              <button className="size-5 rounded text-[#6b7280] hover:text-white text-[9px] font-bold hover:bg-white/[0.04]">3</button>
-              <button className="p-0.5 text-[#6b7280] hover:text-white rounded"><span className="material-symbols-outlined text-[14px]">chevron_right</span></button>
-            </div>
+              </thead>
+              <tbody className="divide-y divide-white/[0.04]">
+                {[
+                  { tx: "TXN-90218", name: "Suman Shrestha", plan: "Kharidar Exam Pass (6 Months)", method: "eSewa", amount: "Rs 499", status: "Success" },
+                  { tx: "TXN-90219", name: "Pooja Adhikari", plan: "Officer All-Access VIP", method: "Khalti", amount: "Rs 1,499", status: "Success" },
+                  { tx: "TXN-90220", name: "Aayush Pokharel", plan: "Nayab Subba Complete Pack", method: "ConnectIPS", amount: "Rs 799", status: "Success" },
+                  { tx: "TXN-90221", name: "Bikash Thapa", plan: "Kharidar Exam Pass", method: "Fonepay", amount: "Rs 499", status: "Success" },
+                ].map((row) => (
+                  <tr key={row.tx} className="hover:bg-white/[0.02] transition-colors">
+                    <td className="px-5 py-3.5 font-mono text-[11px] font-bold text-[#c4b5fd]">{row.tx}</td>
+                    <td className="px-5 py-3.5 text-[12px] font-semibold text-white">{row.name}</td>
+                    <td className="px-5 py-3.5 text-[12px] text-[#9ca3af]">{row.plan}</td>
+                    <td className="px-5 py-3.5 text-[12px] font-medium text-white">{row.method}</td>
+                    <td className="px-5 py-3.5 text-[12px] font-bold text-[#4ade80]">{row.amount}</td>
+                    <td className="px-5 py-3.5 text-right">
+                      <span className="px-2.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider bg-[#22c55e]/15 border border-[#22c55e]/30 text-[#4ade80]">
+                        {row.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       </div>

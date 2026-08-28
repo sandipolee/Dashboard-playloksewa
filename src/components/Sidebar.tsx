@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
+import { useSidebar } from "./SidebarContext";
 
 export default function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
+  const { isCollapsed, toggleSidebar } = useSidebar();
   const [userEmail, setUserEmail] = useState<string | null>(null);
 
   useEffect(() => {
@@ -36,25 +38,24 @@ export default function Sidebar() {
 
   const sections = [
     {
-      title: "CONTENT",
+      title: "LEARN & PLAY",
+      items: [
+        { name: "Practice & Mock Tests", icon: "sports_esports", path: "/practice" },
+      ],
+    },
+    {
+      title: "ADMIN CONTENT",
       items: [
         { name: "Overview", icon: "grid_view", path: "/" },
-        { name: "Exam Sets", icon: "description", path: "/model-sets" },
-        { name: "Questions", icon: "quiz", path: "/questions" },
+        { name: "Exam Sets", icon: "assignment", path: "/model-sets" },
+        { name: "Question Bank", icon: "quiz", path: "/questions" },
       ],
     },
     {
-      title: "USERS",
+      title: "PEOPLE & REVENUE",
       items: [
-        { name: "Users", icon: "group", path: "/users" },
+        { name: "Candidates", icon: "group", path: "/users" },
         { name: "Subscriptions", icon: "credit_card", path: "/revenue" },
-      ],
-    },
-    {
-      title: "MONITOR",
-      items: [
-        { name: "Live Sessions", icon: "sensors", path: "/live" },
-        { name: "Analytics", icon: "insights", path: "/analytics" },
       ],
     },
     {
@@ -65,52 +66,100 @@ export default function Sidebar() {
     },
   ];
 
-  const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : "AU";
-  const userDisplayName = userEmail ? userEmail.split("@")[0] : "Admin User";
+  const userInitial = userEmail ? userEmail.charAt(0).toUpperCase() : "A";
+  const userDisplayName = userEmail ? userEmail.split("@")[0] : "Admin";
 
   return (
-    <aside className="fixed left-0 top-0 h-full w-[190px] bg-[#161922] flex flex-col py-4 px-2.5 border-r border-white/[0.06] z-40 select-none">
-      {/* Brand */}
-      <div className="flex items-center gap-2 px-2.5 mb-6">
-        <div className="size-7 rounded-md bg-gradient-to-br from-[#534AB7] to-[#6C63FF] flex items-center justify-center shadow-md shadow-[#534AB7]/20">
-          <span className="material-symbols-outlined text-white text-[14px]" style={{ fontVariationSettings: "'FILL' 1" }}>
-            rocket_launch
+    <aside
+      className={`fixed left-0 top-0 h-screen bg-[#11141d] border-r border-white/[0.08] flex flex-col z-40 select-none transition-all duration-300 ease-in-out ${
+        isCollapsed ? "w-[68px]" : "w-[230px]"
+      }`}
+    >
+      {/* Header / Brand */}
+      <div className="h-16 flex items-center justify-between px-3.5 border-b border-white/[0.06] shrink-0">
+        <Link href="/" className="flex items-center gap-3 overflow-hidden">
+          <div className="size-9 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] flex items-center justify-center shadow-md shadow-[#534AB7]/30 shrink-0">
+            <span className="material-symbols-outlined text-white text-[18px]" style={{ fontVariationSettings: "'FILL' 1" }}>
+              rocket_launch
+            </span>
+          </div>
+          {!isCollapsed && (
+            <div className="min-w-0 transition-opacity duration-200">
+              <h1 className="text-[13px] font-bold text-white leading-tight tracking-tight truncate">
+                Play Loksewa
+              </h1>
+              <p className="text-[9.5px] text-[#6b7280] font-medium tracking-wide">
+                Practice & Exam Arena
+              </p>
+            </div>
+          )}
+        </Link>
+
+        {/* Collapse / Expand Toggle Button */}
+        <button
+          type="button"
+          onClick={toggleSidebar}
+          className={`size-7 rounded-lg bg-white/[0.04] hover:bg-white/[0.08] text-[#9ca3af] hover:text-white flex items-center justify-center transition-all border border-white/[0.06] shrink-0 ${
+            isCollapsed ? "mx-auto" : ""
+          }`}
+          title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+        >
+          <span className="material-symbols-outlined text-[16px]">
+            {isCollapsed ? "chevron_right" : "chevron_left"}
           </span>
-        </div>
-        <div>
-          <h1 className="text-[12px] font-bold text-white leading-tight tracking-tight">Play Loksewa</h1>
-          <p className="text-[9px] text-[#6b7280] font-medium">Admin Console</p>
-        </div>
+        </button>
       </div>
 
-      {/* Navigation */}
-      <nav className="flex-1 flex flex-col gap-5">
+      {/* Navigation Links */}
+      <nav className="flex-1 overflow-y-auto custom-scrollbar py-4 px-2.5 flex flex-col gap-6">
         {sections.map((section) => (
-          <div key={section.title} className="flex flex-col gap-px">
-            <h3 className="px-2.5 text-[9px] font-semibold uppercase tracking-[0.12em] text-[#6b7280]/50 mb-1">
-              {section.title}
-            </h3>
+          <div key={section.title} className="flex flex-col gap-1">
+            {!isCollapsed ? (
+              <h3 className="px-3 text-[9px] font-bold uppercase tracking-[0.12em] text-[#6b7280]/60 mb-1">
+                {section.title}
+              </h3>
+            ) : (
+              <div className="h-[1px] bg-white/[0.04] my-1 mx-2" />
+            )}
+
             {section.items.map((item) => {
               const isActive =
-                item.path !== "#" &&
-                (item.path === "/" ? pathname === "/" : pathname.startsWith(item.path));
+                item.path === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.path);
+
               return (
                 <Link
                   key={item.name}
                   href={item.path}
-                  className={`flex items-center gap-2 px-2.5 py-[5px] rounded-md text-[11.5px] font-medium transition-all ${
+                  className={`group relative flex items-center gap-3 px-3 py-2.5 rounded-xl text-[12px] font-semibold transition-all ${
                     isActive
-                      ? "bg-[#534AB7]/10 text-[#a78bfa] border-l-[2.5px] border-[#534AB7] pl-[8px]"
-                      : "text-[#9ca3af] hover:text-white hover:bg-white/[0.04]"
-                  }`}
+                      ? "bg-[#534AB7]/20 text-[#c4b5fd] shadow-sm shadow-[#534AB7]/10 border border-[#534AB7]/40"
+                      : "text-[#9ca3af] hover:text-white hover:bg-white/[0.05]"
+                  } ${isCollapsed ? "justify-center px-0" : ""}`}
                 >
+                  {/* Left Accent indicator when active */}
+                  {isActive && !isCollapsed && (
+                    <span className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 bg-[#7c75ff] rounded-r-full"></span>
+                  )}
+
                   <span
-                    className="material-symbols-outlined text-[16px]"
+                    className={`material-symbols-outlined text-[19px] shrink-0 transition-transform group-hover:scale-110 ${
+                      isActive ? "text-[#a78bfa]" : "text-[#8c909f] group-hover:text-white"
+                    }`}
                     style={isActive ? { fontVariationSettings: "'FILL' 1" } : {}}
                   >
                     {item.icon}
                   </span>
-                  <span>{item.name}</span>
+
+                  {!isCollapsed && <span className="truncate">{item.name}</span>}
+
+                  {/* Tooltip in Collapsed Mode */}
+                  {isCollapsed && (
+                    <div className="absolute left-full ml-3 px-2.5 py-1.5 bg-[#1a1e2b] text-white text-[11px] font-semibold rounded-lg shadow-xl border border-white/[0.1] opacity-0 pointer-events-none group-hover:opacity-100 transition-opacity z-50 whitespace-nowrap">
+                      {item.name}
+                    </div>
+                  )}
                 </Link>
               );
             })}
@@ -118,24 +167,45 @@ export default function Sidebar() {
         ))}
       </nav>
 
-      {/* User Profile & Sign Out */}
-      <div className="mt-auto pt-3 border-t border-white/[0.06] flex items-center justify-between px-1">
-        <div className="flex items-center gap-2 overflow-hidden">
-          <div className="size-6 rounded-full bg-[#534AB7] flex items-center justify-center text-[9px] font-bold text-white shrink-0">
-            {userInitial}
+      {/* User Footer */}
+      <div className="p-3 border-t border-white/[0.06] bg-[#0d0f15] shrink-0">
+        <div className={`flex items-center gap-2.5 ${isCollapsed ? "justify-center" : "justify-between"}`}>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="size-8 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] text-white font-bold text-xs flex items-center justify-center shadow-sm shrink-0">
+              {userInitial}
+            </div>
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <p className="text-[12px] font-semibold text-white truncate leading-tight">
+                  {userDisplayName}
+                </p>
+                <p className="text-[9px] text-[#6b7280] truncate mt-0.5">
+                  {userEmail || "Active Session"}
+                </p>
+              </div>
+            )}
           </div>
-          <div className="truncate">
-            <p className="text-[10.5px] font-semibold text-white leading-tight truncate">{userDisplayName}</p>
-            <p className="text-[8.5px] text-[#6b7280] truncate">{userEmail || "Active Session"}</p>
-          </div>
+
+          {!isCollapsed ? (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="p-1.5 rounded-lg text-[#6b7280] hover:text-[#ef4444] hover:bg-[#ef4444]/10 transition-colors shrink-0"
+              title="Sign Out"
+            >
+              <span className="material-symbols-outlined text-[18px]">logout</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleSignOut}
+              className="hidden group-hover:flex"
+              title="Sign Out"
+            >
+              <span className="material-symbols-outlined text-[16px] text-[#ef4444]">logout</span>
+            </button>
+          )}
         </div>
-        <button
-          onClick={handleSignOut}
-          className="p-1 text-[#6b7280] hover:text-[#ef4444] rounded hover:bg-white/5 transition-colors shrink-0"
-          title="Sign Out"
-        >
-          <span className="material-symbols-outlined text-[16px]">logout</span>
-        </button>
       </div>
     </aside>
   );

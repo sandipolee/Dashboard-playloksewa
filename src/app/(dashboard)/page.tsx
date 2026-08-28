@@ -1,146 +1,361 @@
 "use client";
 
+import { useState, useEffect } from "react";
+import Link from "next/link";
+
+interface ModelSetItem {
+  id: string;
+  setId: string;
+  title: string;
+  category: string;
+  duration: number;
+  questionsCount: number;
+  status: string;
+  createdAt?: string;
+}
+
 export default function Dashboard() {
+  const [sets, setSets] = useState<ModelSetItem[]>([]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [timeframe, setTimeframe] = useState<"7D" | "30D" | "1Y">("30D");
+
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        const [setsRes, catsRes] = await Promise.all([
+          fetch("/api/model-sets"),
+          fetch("/api/categories"),
+        ]);
+
+        const setsJson = await setsRes.json();
+        const catsJson = await catsRes.json();
+
+        if (setsRes.ok && Array.isArray(setsJson.data)) {
+          setSets(setsJson.data);
+        }
+        if (catsRes.ok && Array.isArray(catsJson.data)) {
+          setCategories(catsJson.data);
+        }
+      } catch (err) {
+        console.error("Failed to load dashboard data:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const totalSets = sets.length;
+  const publishedSets = sets.filter((s) => s.status === "Published").length;
+  const draftSets = sets.filter((s) => s.status === "Draft").length;
+  const totalQuestions = sets.reduce((sum, s) => sum + (s.questionsCount || 0), 0);
+
   return (
-    <div className="flex-1 flex flex-col overflow-hidden">
-      {/* Top Bar */}
-      <header className="h-11 border-b border-white/[0.06] bg-[#0f1117] flex items-center justify-between px-5 shrink-0">
-        <h2 className="text-[12px] font-bold text-white">Dashboard Overview</h2>
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#0f1117]">
+      {/* Top Header Bar */}
+      <header className="h-14 border-b border-white/[0.08] bg-[#141721] flex items-center justify-between px-6 shrink-0 select-none">
+        <div className="flex items-center gap-3">
+          <h2 className="text-[13px] font-bold text-white tracking-wide">Overview Dashboard</h2>
+          <span className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[#22c55e]/15 border border-[#22c55e]/30 text-[9.5px] font-bold text-[#4ade80] uppercase tracking-wider">
+            <span className="size-1.5 rounded-full bg-[#22c55e] animate-pulse"></span>
+            Supabase Live
+          </span>
+        </div>
+
         <div className="flex items-center gap-2.5">
-          <div className="relative w-[200px]">
-            <span className="material-symbols-outlined absolute left-2.5 top-1/2 -translate-y-1/2 text-[#3f4451] text-[14px]">search</span>
-            <input className="w-full bg-[#1e222d] border border-white/[0.06] rounded-md pl-8 pr-3 py-[4px] text-[11px] text-[#9ca3af] placeholder:text-[#3f4451] focus:outline-none focus:border-[#534AB7]/40 transition-all" placeholder="Search resources..." type="text" />
-          </div>
-          <button className="p-1 text-[#6b7280] hover:text-white rounded hover:bg-white/5 relative transition-colors">
-            <span className="material-symbols-outlined text-[17px]">notifications</span>
-            <span className="absolute top-0.5 right-0.5 size-1.5 bg-[#ef4444] rounded-full border border-[#0f1117]"></span>
-          </button>
+          <Link
+            href="/practice"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#534AB7]/20 hover:bg-[#534AB7]/30 border border-[#534AB7]/40 text-[#c4b5fd] text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all"
+          >
+            <span className="material-symbols-outlined text-[15px]">sports_esports</span>
+            Play Quiz
+          </Link>
+          <Link
+            href="/model-sets/create"
+            className="flex items-center gap-1.5 px-3.5 py-1.5 bg-gradient-to-r from-[#534AB7] to-[#6358d4] hover:from-[#6358d4] hover:to-[#756cf0] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl shadow-md shadow-[#534AB7]/20 transition-all transform active:scale-95"
+          >
+            <span className="material-symbols-outlined text-[15px]">add</span>
+            New Set
+          </Link>
         </div>
       </header>
 
-      {/* Content */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar px-5 py-5 pb-10">
-        {/* Greeting */}
-        <div className="mb-4 flex items-center justify-between">
+      {/* Main Content Area */}
+      <div className="flex-1 overflow-y-auto custom-scrollbar p-6 max-w-7xl mx-auto w-full pb-16 space-y-6">
+        {/* Minimal Greeting Header */}
+        <div className="flex flex-wrap items-center justify-between gap-3 pb-1 border-b border-white/[0.04]">
           <div>
-            <h1 className="text-[15px] font-bold text-white mb-0.5">Good Morning, Admin.</h1>
-            <p className="text-[11px] text-[#6b7280]">Here is the system overview for today.</p>
+            <h1 className="text-lg font-bold text-white font-headline">
+              Loksewa Management Console
+            </h1>
+            <p className="text-[11px] text-[#8c909f]">
+              Live database metrics, model examinations pipeline, and student activity summary.
+            </p>
           </div>
+
           <div className="flex items-center gap-2">
-            <button className="flex items-center gap-1.5 px-3 py-[5px] bg-[#1e222d] border border-white/[0.06] text-[10px] font-semibold text-[#9ca3af] rounded-md hover:bg-[#282d3d] transition-all">
-              <span className="material-symbols-outlined text-[13px]">download</span>
-              Export Report
-            </button>
-            <button className="flex items-center gap-1.5 px-3 py-[5px] bg-[#534AB7] text-white text-[10px] font-bold rounded-md shadow-md shadow-[#534AB7]/20 hover:bg-[#6358d4] transition-all">
-              <span className="material-symbols-outlined text-[13px]">add</span>
-              New Exam Set
-            </button>
+            <Link
+              href="/model-sets"
+              className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#d1d5db] text-[10.5px] font-semibold rounded-lg transition-all"
+            >
+              Exam Sets ({totalSets})
+            </Link>
+            <Link
+              href="/questions"
+              className="flex items-center gap-1 px-3 py-1.5 bg-white/[0.04] hover:bg-white/[0.08] border border-white/[0.08] text-[#d1d5db] text-[10.5px] font-semibold rounded-lg transition-all"
+            >
+              Questions Bank
+            </Link>
           </div>
         </div>
 
-        {/* Stats Cards */}
-        <div className="grid grid-cols-4 gap-3 mb-5">
-          {[
-            { label: "ACTIVE USERS", value: "12,450", change: "+8.2%", changeColor: "text-[#22c55e]", icon: "group", iconBg: "bg-[#22c55e]/10 text-[#22c55e]" },
-            { label: "EXAM COMPLETIONS", value: "8,211", change: "+12.4%", changeColor: "text-[#22c55e]", icon: "task_alt", iconBg: "bg-[#0d9488]/10 text-[#0d9488]" },
-            { label: "NEW SUBSCRIPTIONS", value: "342", change: "-2.1%", changeColor: "text-[#ef4444]", icon: "card_membership", iconBg: "bg-[#534AB7]/10 text-[#a78bfa]" },
-            { label: "SYSTEM HEALTH", value: "99.9%", sub: "Stable", icon: "dns", iconBg: "bg-[#22c55e]/10 text-[#22c55e]" },
-          ].map((stat) => (
-            <div key={stat.label} className="bg-[#161922] border border-white/[0.04] rounded-lg p-3.5 flex items-center justify-between">
+        {/* Live Database Stats Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3.5">
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">
+                Total Model Sets
+              </p>
+              <p className="text-[22px] font-bold text-white font-headline leading-tight">
+                {loading ? "..." : totalSets}
+              </p>
+              <span className="text-[9.5px] text-[#4ade80] font-semibold mt-0.5 block">
+                {publishedSets} Active in Arena
+              </span>
+            </div>
+            <div className="size-10 rounded-xl bg-gradient-to-tr from-[#534AB7] to-[#7c75ff] text-white flex items-center justify-center shadow-sm">
+              <span className="material-symbols-outlined text-[19px]">assignment</span>
+            </div>
+          </div>
+
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">
+                Total Questions
+              </p>
+              <p className="text-[22px] font-bold text-[#c4b5fd] font-headline leading-tight">
+                {loading ? "..." : totalQuestions}
+              </p>
+              <span className="text-[9.5px] text-[#6b7280] font-semibold mt-0.5 block">
+                Across all bundles
+              </span>
+            </div>
+            <div className="size-10 rounded-xl bg-gradient-to-tr from-[#3b82f6] to-[#60a5fa] text-white flex items-center justify-center shadow-sm">
+              <span className="material-symbols-outlined text-[19px]">quiz</span>
+            </div>
+          </div>
+
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">
+                Subject Categories
+              </p>
+              <p className="text-[22px] font-bold text-[#4ade80] font-headline leading-tight">
+                {loading ? "..." : Math.max(categories.length, 1)}
+              </p>
+              <span className="text-[9.5px] text-[#6b7280] font-semibold mt-0.5 block">
+                In Database
+              </span>
+            </div>
+            <div className="size-10 rounded-xl bg-gradient-to-tr from-[#22c55e] to-[#4ade80] text-white flex items-center justify-center shadow-sm">
+              <span className="material-symbols-outlined text-[19px]">category</span>
+            </div>
+          </div>
+
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4 flex items-center justify-between shadow-sm">
+            <div>
+              <p className="text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1">
+                Drafts In Pipeline
+              </p>
+              <p className="text-[22px] font-bold text-[#fbbf24] font-headline leading-tight">
+                {loading ? "..." : draftSets}
+              </p>
+              <span className="text-[9.5px] text-[#6b7280] font-semibold mt-0.5 block">
+                Pending publish
+              </span>
+            </div>
+            <div className="size-10 rounded-xl bg-gradient-to-tr from-[#d97706] to-[#fbbf24] text-white flex items-center justify-center shadow-sm">
+              <span className="material-symbols-outlined text-[19px]">edit_document</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Real Sets Table from Database */}
+        <div className="bg-[#141721] border border-white/[0.06] rounded-xl overflow-hidden shadow-sm">
+          <div className="px-5 py-3.5 flex items-center justify-between border-b border-white/[0.06]">
+            <div>
+              <h3 className="text-[13px] font-bold text-white">Database Model Sets & Practice Bundles</h3>
+              <p className="text-[10.5px] text-[#6b7280]">Real examination sets configured in the system.</p>
+            </div>
+            <Link
+              href="/model-sets"
+              className="text-[11px] font-bold text-[#a78bfa] hover:text-white transition-colors"
+            >
+              View Full List →
+            </Link>
+          </div>
+
+          {loading ? (
+            <div className="p-10 text-center">
+              <span className="material-symbols-outlined text-[28px] text-[#534AB7] animate-spin mb-2">
+                progress_activity
+              </span>
+              <p className="text-[11px] text-[#6b7280]">Loading live data from Supabase...</p>
+            </div>
+          ) : sets.length === 0 ? (
+            <div className="p-10 text-center text-[#6b7280]">
+              <p className="text-[12px]">No model sets found in database. Create your first set now.</p>
+              <Link
+                href="/model-sets/create"
+                className="inline-block mt-3 px-3 py-1.5 bg-[#534AB7] text-white text-[11px] font-bold rounded-lg"
+              >
+                + Create Set
+              </Link>
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-left">
+                <thead>
+                  <tr className="border-b border-white/[0.06] bg-[#10131a]">
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Set ID</th>
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Title & Category</th>
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Questions</th>
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Duration</th>
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Status</th>
+                    <th className="px-5 py-3 text-[9.5px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Action</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/[0.04]">
+                  {sets.slice(0, 5).map((set) => (
+                    <tr key={set.id} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="px-5 py-3 font-mono text-[11px] font-bold text-[#c4b5fd]">
+                        {set.setId}
+                      </td>
+                      <td className="px-5 py-3">
+                        <p className="text-[12.5px] font-semibold text-white">{set.title}</p>
+                        <span className="inline-block mt-0.5 px-2 py-0.5 rounded text-[9px] font-bold bg-[#534AB7]/15 text-[#a78bfa] border border-[#534AB7]/30">
+                          {set.category || "General"}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-[12px] font-semibold text-[#d1d5db]">
+                        {set.questionsCount || 0} items
+                      </td>
+                      <td className="px-5 py-3 text-[12px] text-[#9ca3af]">
+                        {set.duration || 45} mins
+                      </td>
+                      <td className="px-5 py-3">
+                        <span className={`px-2 py-0.5 rounded text-[9.5px] font-bold uppercase tracking-wider border ${
+                          set.status === "Published"
+                            ? "bg-[#22c55e]/15 border-[#22c55e]/30 text-[#4ade80]"
+                            : "bg-[#d97706]/15 border-[#d97706]/30 text-[#fbbf24]"
+                        }`}>
+                          {set.status}
+                        </span>
+                      </td>
+                      <td className="px-5 py-3 text-right">
+                        <div className="flex items-center justify-end gap-1.5">
+                          <Link
+                            href={`/quiz?setId=${encodeURIComponent(set.id)}&title=${encodeURIComponent(set.title)}`}
+                            className="px-2.5 py-1 rounded-lg bg-[#534AB7]/20 hover:bg-[#534AB7] text-[#c4b5fd] hover:text-white border border-[#534AB7]/40 text-[10.5px] font-bold transition-all"
+                          >
+                            Play
+                          </Link>
+                          <Link
+                            href={`/model-sets/create?id=${set.id}`}
+                            className="p-1 rounded-lg text-[#9ca3af] hover:text-white hover:bg-white/[0.06] transition-all"
+                            title="Edit Set"
+                          >
+                            <span className="material-symbols-outlined text-[16px]">edit</span>
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Activity & System Health Grid */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          {/* Activity Chart */}
+          <div className="lg:col-span-2 bg-[#141721] border border-white/[0.06] rounded-xl p-4.5 shadow-sm">
+            <div className="flex items-center justify-between mb-3.5">
               <div>
-                <p className="text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280] mb-1.5">{stat.label}</p>
-                <div className="flex items-baseline gap-1.5">
-                  <span className="text-[18px] font-bold text-white font-headline">{stat.value}</span>
-                  {stat.change && <span className={`text-[9px] font-bold ${stat.changeColor}`}>{stat.change}</span>}
-                  {stat.sub && <span className="text-[9px] font-medium text-[#6b7280]">{stat.sub}</span>}
-                </div>
+                <h3 className="text-[13px] font-bold text-white mb-0.5">Platform Activity</h3>
+                <p className="text-[10.5px] text-[#6b7280]">Daily student tests and practice volume.</p>
               </div>
-              <div className={`size-8 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
-                <span className="material-symbols-outlined text-[16px]">{stat.icon}</span>
-              </div>
-            </div>
-          ))}
-        </div>
 
-        {/* Platform Activity + Recent Alerts */}
-        <div className="grid grid-cols-3 gap-4 mb-5">
-          <div className="col-span-2 bg-[#161922] border border-white/[0.04] rounded-lg p-4">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-[12px] font-bold text-white">Platform Activity</h3>
-              <div className="flex items-center gap-0.5 bg-[#1e222d] rounded-md p-0.5">
-                <button className="px-2 py-[3px] text-[9px] font-bold text-[#6b7280] rounded hover:text-white">7D</button>
-                <button className="px-2 py-[3px] text-[9px] font-bold text-white bg-white/[0.06] rounded">30D</button>
-                <button className="px-2 py-[3px] text-[9px] font-bold text-[#6b7280] rounded hover:text-white">1Y</button>
+              <div className="flex items-center bg-[#10131a] p-0.5 rounded-lg border border-white/[0.06]">
+                {(["7D", "30D", "1Y"] as const).map((t) => (
+                  <button
+                    key={t}
+                    type="button"
+                    onClick={() => setTimeframe(t)}
+                    className={`px-2.5 py-0.5 text-[9.5px] font-bold rounded transition-all ${
+                      timeframe === t
+                        ? "bg-[#534AB7] text-white shadow-sm"
+                        : "text-[#6b7280] hover:text-white"
+                    }`}
+                  >
+                    {t}
+                  </button>
+                ))}
               </div>
             </div>
-            <div className="h-[200px] flex items-end gap-[2px] px-3">
-              {[40,55,35,65,50,70,45,80,60,90,75,85,50,65,70,55,80,95,60,75,85,70,90,65,50,75,85,95,80,70].map((h,i) => (
-                <div key={i} className="flex-1 bg-[#534AB7]/20 hover:bg-[#534AB7]/40 rounded-t transition-colors" style={{ height: `${h}%` }}></div>
-              ))}
-            </div>
-          </div>
 
-          <div className="bg-[#161922] border border-white/[0.04] rounded-lg p-4">
-            <h3 className="text-[12px] font-bold text-white mb-3.5">Recent Alerts</h3>
-            <div className="flex flex-col gap-3">
-              {[
-                { icon: "check_circle", iconColor: "text-[#22c55e]", title: "Database Backup Complete", desc: "Automated daily snapshot successful.", time: "10 MINS AGO" },
-                { icon: "info", iconColor: "text-[#3b82f6]", title: "New Exam Set Published", desc: '"Section Officer Model Set 4" is now live.', time: "1 HOUR AGO", highlight: true },
-                { icon: "warning", iconColor: "text-[#d97706]", title: "High Server Load Detected", desc: "Node-02 CPU utilization exceeded 85%.", time: "3 HOURS AGO" },
-                { icon: "group_add", iconColor: "text-[#a78bfa]", title: "Bulk User Import", desc: "250 new student profiles created.", time: "5 HOURS AGO" },
-              ].map((alert, i) => (
-                <div key={i} className={`flex gap-2.5 p-2 rounded-md ${alert.highlight ? "bg-[#1e222d] border border-white/[0.04]" : ""}`}>
-                  <span className={`material-symbols-outlined text-[14px] mt-0.5 shrink-0 ${alert.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{alert.icon}</span>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-[10.5px] font-bold text-white mb-0.5">{alert.title}</p>
-                    <p className="text-[9.5px] text-[#6b7280] leading-relaxed">{alert.desc}</p>
-                    <span className="text-[8px] font-bold uppercase tracking-[0.1em] text-[#3f4451] mt-0.5 block">{alert.time}</span>
-                  </div>
+            <div className="h-[170px] flex items-end gap-[3px] px-1 pt-2">
+              {[45, 60, 50, 75, 65, 85, 70, 90, 80, 95, 85, 90, 60, 70, 80, 65, 90, 100, 75, 85, 95, 80, 95, 70, 65, 80, 90, 100, 85, 90].map((h, i) => (
+                <div key={i} className="flex-1 flex flex-col items-center gap-1 group/bar relative">
+                  <div
+                    className="w-full bg-[#534AB7]/25 hover:bg-[#7c75ff] rounded-t transition-all cursor-pointer"
+                    style={{ height: `${h}%` }}
+                  ></div>
                 </div>
               ))}
-              <button className="text-[10px] font-semibold text-[#a78bfa] hover:text-[#c4b5fd] text-center mt-1 transition-colors">View All Logs</button>
             </div>
           </div>
-        </div>
 
-        {/* Recent Exam Submissions */}
-        <div className="bg-[#161922] border border-white/[0.04] rounded-lg overflow-hidden">
-          <div className="px-4 py-3 flex items-center justify-between border-b border-white/[0.04]">
-            <h3 className="text-[12px] font-bold text-white">Recent Exam Submissions</h3>
-            <button className="text-[#3f4451] hover:text-[#9ca3af]"><span className="material-symbols-outlined text-[16px]">more_horiz</span></button>
+          {/* Quick System Status */}
+          <div className="bg-[#141721] border border-white/[0.06] rounded-xl p-4.5 shadow-sm flex flex-col justify-between">
+            <div>
+              <h3 className="text-[13px] font-bold text-white mb-3">System Node Status</h3>
+              <div className="flex flex-col gap-2.5">
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#10131a] border border-white/[0.04]">
+                  <span className="text-[11px] text-[#9ca3af]">Supabase PostgreSQL</span>
+                  <span className="text-[10px] font-bold text-[#4ade80] flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-[#22c55e]"></span>
+                    Operational
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#10131a] border border-white/[0.04]">
+                  <span className="text-[11px] text-[#9ca3af]">Next.js API Engine</span>
+                  <span className="text-[10px] font-bold text-[#4ade80] flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-[#22c55e]"></span>
+                    Fast (Turbopack)
+                  </span>
+                </div>
+                <div className="flex items-center justify-between p-2.5 rounded-lg bg-[#10131a] border border-white/[0.04]">
+                  <span className="text-[11px] text-[#9ca3af]">Auth / Security</span>
+                  <span className="text-[10px] font-bold text-[#4ade80] flex items-center gap-1">
+                    <span className="size-1.5 rounded-full bg-[#22c55e]"></span>
+                    RLS Active
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            <Link
+              href="/practice"
+              className="mt-4 w-full py-2 bg-gradient-to-r from-[#534AB7] to-[#6358d4] text-white text-[11px] font-bold uppercase tracking-wider rounded-xl transition-all text-center shadow-md shadow-[#534AB7]/20"
+            >
+              Open Practice Arena
+            </Link>
           </div>
-          <table className="w-full text-left">
-            <thead>
-              <tr className="border-b border-white/[0.04]">
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">User ID</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Exam Name</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Score</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280]">Status</th>
-                <th className="px-4 py-2.5 text-[9px] font-bold uppercase tracking-[0.1em] text-[#6b7280] text-right">Time</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-white/[0.04]">
-              {[
-                { uid: "USR-9281", exam: "Kharidar General Knowledge", score: "85/100", status: "Passed", statusColor: "text-[#22c55e]", time: "12:45 PM" },
-                { uid: "USR-4420", exam: "Nayab Subba Model 2", score: "42/100", status: "Failed", statusColor: "text-[#ef4444]", time: "11:30 AM" },
-                { uid: "USR-7731", exam: "Section Officer IQ Test", score: "-", status: "In Progress", statusColor: "text-[#d97706]", time: "11:15 AM" },
-                { uid: "USR-1198", exam: "Kharidar General Knowledge", score: "92/100", status: "Passed", statusColor: "text-[#22c55e]", time: "10:05 AM" },
-              ].map((row) => (
-                <tr key={row.uid} className="hover:bg-white/[0.02] transition-colors">
-                  <td className="px-4 py-2.5 text-[10px] font-semibold text-[#6b7280]">{row.uid}</td>
-                  <td className="px-4 py-2.5 text-[11px] font-medium text-white">{row.exam}</td>
-                  <td className="px-4 py-2.5 text-[11px] font-bold text-white">{row.score}</td>
-                  <td className="px-4 py-2.5">
-                    <div className="flex items-center gap-1">
-                      <span className={`size-1.5 rounded-full ${row.statusColor.replace("text-","bg-")}`}></span>
-                      <span className={`text-[10px] font-medium ${row.statusColor}`}>{row.status}</span>
-                    </div>
-                  </td>
-                  <td className="px-4 py-2.5 text-right text-[10px] text-[#6b7280]">{row.time}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </div>
       </div>
     </div>

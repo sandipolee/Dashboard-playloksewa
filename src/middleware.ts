@@ -18,6 +18,8 @@ export async function middleware(request: NextRequest) {
       pathname.startsWith("/landing") ||
       pathname.startsWith("/login") ||
       pathname.startsWith("/auth") ||
+      pathname.startsWith("/quiz") ||
+      pathname.startsWith("/practice") ||
       pathname.startsWith("/api");
 
     if (!isPublic) {
@@ -58,8 +60,9 @@ export async function middleware(request: NextRequest) {
       pathname === "/landing" || pathname.startsWith("/landing/");
     const isAuthCallback = pathname.startsWith("/auth");
     const isApiRoute = pathname.startsWith("/api");
+    const isQuizPage = pathname.startsWith("/quiz") || pathname.startsWith("/practice");
     const isPublic =
-      isLoginPage || isLandingPage || isAuthCallback || isApiRoute;
+      isLoginPage || isLandingPage || isAuthCallback || isApiRoute || isQuizPage;
 
     if (!user && !isPublic) {
       // Unauthenticated → landing page
@@ -77,13 +80,14 @@ export async function middleware(request: NextRequest) {
 
     return response;
   } catch (error) {
-    // If anything crashes (missing creds, network, etc.) fall through gracefully
     console.error("Middleware error:", error);
     const { pathname } = request.nextUrl;
     const isPublic =
       pathname.startsWith("/landing") ||
       pathname.startsWith("/login") ||
       pathname.startsWith("/auth") ||
+      pathname.startsWith("/quiz") ||
+      pathname.startsWith("/practice") ||
       pathname.startsWith("/api");
     if (!isPublic) {
       const url = request.nextUrl.clone();
@@ -96,12 +100,6 @@ export async function middleware(request: NextRequest) {
 
 export const config = {
   matcher: [
-    /*
-     * Match all request paths except for the ones starting with:
-     * - _next/static (static files)
-     * - _next/image (image optimization files)
-     * - favicon.ico (favicon file)
-     */
     "/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)",
   ],
 };
