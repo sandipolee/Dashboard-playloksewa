@@ -19,6 +19,7 @@ const LOKSEWA_MASTER_QUESTIONS: Question[] = [
       { id: "D", textNp: "३६ भाग, ३१० धारा र १० अनुसूची", textEn: "36 Parts, 310 Articles and 10 Schedules" },
     ],
     correctOptionId: "A",
+    note: "नेपालको संविधान २०७२ मा ३५ भाग, ३०८ धारा र ९ अनुसूचीहरू रहेका छन्। यो संविधान २०७२ असोज ३ गते जारी भएको थियो।",
   },
   {
     id: "2",
@@ -193,6 +194,7 @@ function QuizPlayerContent() {
                 textEn: q.text_en || q.textEn || "",
                 options: q.options || [],
                 correctOptionId: q.correct_option_id || q.correctOptionId || "A",
+                note: q.note || "",
               }));
               setQuestions(mapped);
             }
@@ -496,6 +498,17 @@ function QuizPlayerContent() {
                         );
                       })}
                     </div>
+
+                    {/* Answer Note in Quiz Review */}
+                    {q.note && (
+                      <div className="mt-3 flex items-start gap-2 px-3 py-2.5 bg-[#fbbf24]/8 border border-[#fbbf24]/20 rounded-lg">
+                        <span className="material-symbols-outlined text-[15px] text-[#fbbf24] shrink-0 mt-0.5">lightbulb</span>
+                        <div>
+                          <p className="text-[9.5px] font-bold uppercase text-[#fbbf24] tracking-wider mb-0.5">Note / व्याख्या</p>
+                          <p className="text-[11.5px] text-[#fcd34d] font-[Mukta] leading-relaxed">{q.note}</p>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 );
               })}

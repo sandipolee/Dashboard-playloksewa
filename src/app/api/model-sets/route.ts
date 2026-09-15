@@ -116,9 +116,29 @@ export async function POST(request: Request) {
         text_en: q.textEn || "",
         options: q.options || [],
         correct_option_id: q.correctOptionId || "A",
+        note: q.note || "",
       }));
 
-      const { error: qError } = await supabase.from("model_set_questions").insert(questionRows);
+      let { error: qError } = await supabase.from("model_set_questions").insert(questionRows);
+
+      // Fallback if 'note' column does not exist yet in Supabase table
+      if (qError && qError.message && qError.message.includes("note")) {
+        console.warn("Supabase note column missing, falling back to preserving note in options metadata:", qError.message);
+        const fallbackRows = questions.map((q: any, idx: number) => ({
+          model_set_id: insertedSet.id,
+          order_index: idx + 1,
+          difficulty: q.difficulty || "Easy",
+          subject: q.subject || metadata.category || "GENERAL",
+          text_np: q.textNp || "",
+          text_en: q.textEn || "",
+          options: Array.isArray(q.options)
+            ? q.note ? [...q.options, { id: "__NOTE__", textEn: q.note, textNp: q.note }] : q.options
+            : [],
+          correct_option_id: q.correctOptionId || "A",
+        }));
+        const retryRes = await supabase.from("model_set_questions").insert(fallbackRows);
+        qError = retryRes.error;
+      }
 
       if (qError) {
         console.error("Supabase POST model_set_questions error:", qError);

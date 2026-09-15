@@ -12,6 +12,7 @@ export interface Question {
   textNp: string;
   options: Option[];
   correctOptionId: string;
+  note?: string;
 }
 
 export interface MarkingLogic {

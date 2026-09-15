@@ -30,7 +30,22 @@ export async function GET(
       if (qError) {
         console.warn("Supabase GET model_set_questions warning:", qError.message);
       } else if (qData) {
-        questions = qData;
+        questions = qData.map((q: any) => {
+          let note = q.note || "";
+          let cleanedOptions = q.options || [];
+          if (Array.isArray(cleanedOptions)) {
+            const noteObj = cleanedOptions.find((opt: any) => opt.id === "__NOTE__");
+            if (noteObj) {
+              if (!note) note = noteObj.textEn || noteObj.textNp || "";
+              cleanedOptions = cleanedOptions.filter((opt: any) => opt.id !== "__NOTE__");
+            }
+          }
+          return {
+            ...q,
+            options: cleanedOptions,
+            note,
+          };
+        });
       }
     } catch (e) {
       console.warn("Exception fetching model_set_questions:", e);
@@ -109,8 +124,27 @@ export async function PUT(
             text_en: q.textEn || q.text_en || "",
             options: q.options || [],
             correct_option_id: q.correctOptionId || q.correct_option_id || "A",
+            note: q.note || "",
           }));
-          await supabase.from("model_set_questions").insert(questionRows);
+          let { error: insertErr } = await supabase.from("model_set_questions").insert(questionRows);
+
+          // Fallback if 'note' column is not in DB table
+          if (insertErr && insertErr.message && insertErr.message.includes("note")) {
+            console.warn("Retrying PUT without dedicated note column:", insertErr.message);
+            const fallbackRows = body.questions.map((q: any, idx: number) => ({
+              model_set_id: id,
+              order_index: idx + 1,
+              difficulty: q.difficulty || "Easy",
+              subject: q.subject || category,
+              text_np: q.textNp || q.text_np || "",
+              text_en: q.textEn || q.text_en || "",
+              options: Array.isArray(q.options)
+                ? q.note ? [...q.options, { id: "__NOTE__", textEn: q.note, textNp: q.note }] : q.options
+                : [],
+              correct_option_id: q.correctOptionId || q.correct_option_id || "A",
+            }));
+            await supabase.from("model_set_questions").insert(fallbackRows);
+          }
         }
       } catch (qErr) {
         console.warn("Could not update model_set_questions:", qErr);

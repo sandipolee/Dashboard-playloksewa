@@ -111,6 +111,7 @@ function CreateModelSetForm() {
                 { id: "D", textEn: "", textNp: "" },
               ],
               correctOptionId: q.correct_option_id || q.correctOptionId || "A",
+              note: q.note || q.note_np || q.noteNp || "",
             }));
             setQuestions(mappedQuestions);
             setActiveQuestion(mappedQuestions[0].id);
@@ -144,6 +145,7 @@ function CreateModelSetForm() {
         { id: "D", textEn: "", textNp: "" },
       ],
       correctOptionId: "A",
+      note: "",
     };
     const updated = [...questions, newQ];
     setQuestions(updated);
@@ -217,6 +219,7 @@ function CreateModelSetForm() {
         textNp: row.textnp || "",
         options,
         correctOptionId: ["A", "B", "C", "D"].includes(correctOptionId) ? correctOptionId : "A",
+        note: row.note || row.explanation || row.notenp || row.noteen || "",
       });
     }
 
@@ -265,6 +268,7 @@ function CreateModelSetForm() {
         textNp: item.textNp || item.text_np || "",
         options,
         correctOptionId: ["A", "B", "C", "D"].includes(correctOptionId) ? correctOptionId : "A",
+        note: item.note || item.explanation || item.noteNp || item.noteEn || "",
       };
     });
   };
@@ -336,6 +340,7 @@ function CreateModelSetForm() {
 
     const optRegex = /^(\(?([A-Da-dक-घ1-4])[\.\)\:\-]\s*|\b([A-Da-d])\s*[\:\.\)]\s*)(.*)$/;
     const ansRegex = /^(Ans(?:wer)?|Correct(?:\s*Option)?|उत्तर|Correct)[\:\=\s]+([A-Da-dक-घ1-4])/i;
+    const noteRegex = /^(Note|Explanation|व्याख्या|टिपोट|द्रष्टव्य)[\:\=\s]+(.*)/i;
 
     blocks.forEach((block, idx) => {
       let questionText = "";
@@ -346,6 +351,7 @@ function CreateModelSetForm() {
         { id: "D", textEn: "", textNp: "" },
       ];
       let correctOptionId = "A";
+      let note = "";
 
       block.forEach((line) => {
         const cleanLine = line.trim();
@@ -355,6 +361,12 @@ function CreateModelSetForm() {
         if (ansMatch) {
           const rawAns = ansMatch[2].toLowerCase();
           correctOptionId = optMap[rawAns] || rawAns.toUpperCase() || "A";
+          return;
+        }
+
+        const noteMatch = cleanLine.match(noteRegex);
+        if (noteMatch) {
+          note = (noteMatch[2] || "").trim();
           return;
         }
 
@@ -394,6 +406,7 @@ function CreateModelSetForm() {
           textEn: isNepaliStem ? "" : questionText,
           options,
           correctOptionId: ["A", "B", "C", "D"].includes(correctOptionId) ? correctOptionId : "A",
+          note: note.trim(),
         });
       }
     });
@@ -482,7 +495,8 @@ function CreateModelSetForm() {
         { id: "C", textNp: "२०७२ असोज ५", textEn: "2072 Ashoj 5" },
         { id: "D", textNp: "२०७२ असोज ६", textEn: "2072 Ashoj 6" }
       ],
-      correctOptionId: "A"
+      correctOptionId: "A",
+      note: "नेपालको संविधान २०७२ साल असोज ३ गते राष्ट्रपति डा. रामवरण यादवद्वारा जारी गरिएको हो। यसमा ३५ भाग, ३०८ धारा र ९ अनुसूचीहरू रहेका छन्।"
     },
     {
       subject: metadata.category || "GENERAL",
@@ -495,7 +509,8 @@ function CreateModelSetForm() {
         { id: "C", textNp: "से-फोक्सुण्डो ताल", textEn: "Shey-Phoksundo Lake" },
         { id: "D", textNp: "बेग्नास ताल", textEn: "Begnas Lake" }
       ],
-      correctOptionId: "A"
+      correctOptionId: "A",
+      note: "रारा ताल नेपालको सबैभन्दा ठूलो ताल हो। यो मुगु जिल्लामा अवस्थित छ। यसको लम्बाई करिब ५.१ कि.मी. र चौडाई २.७ कि.मी. रहेको छ।"
     }
   ];
 
@@ -526,8 +541,8 @@ function CreateModelSetForm() {
   };
 
   const downloadCSVTemplate = () => {
-    const headers = "Subject,Difficulty,TextNp,TextEn,OptionA_En,OptionA_Np,OptionB_En,OptionB_Np,OptionC_En,OptionC_Np,OptionD_En,OptionD_Np,CorrectOptionId\n";
-    const row = "GENERAL,Easy,नेपालको संविधान कहिले जारी भएको हो?,When was the Constitution of Nepal promulgated?,2072 Ashoj 3,२०७२ असोज ३,2072 Ashoj 4,२०७२ असोज ४,2072 Ashoj 5,२०७२ असोज ५,2072 Ashoj 6,२०७२ असोज ६,A\n";
+    const headers = "Subject,Difficulty,TextNp,TextEn,OptionA_En,OptionA_Np,OptionB_En,OptionB_Np,OptionC_En,OptionC_Np,OptionD_En,OptionD_Np,CorrectOptionId,Note\n";
+    const row = "GENERAL,Easy,नेपालको संविधान कहिले जारी भएको हो?,When was the Constitution of Nepal promulgated?,2072 Ashoj 3,२०७२ असोज ३,2072 Ashoj 4,२०७२ असोज ४,2072 Ashoj 5,२०७२ असोज ५,2072 Ashoj 6,२०७२ असोज ६,A,नेपालको संविधान २०७२ असोज ३ गते जारी भएको हो।\n";
     const blob = new Blob([headers + row], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     link.href = URL.createObjectURL(blob);
@@ -957,6 +972,14 @@ function CreateModelSetForm() {
                                     );
                                   })}
                                 </div>
+
+                                {/* Answer Note Badge */}
+                                {q.note && (
+                                  <div className="mt-2.5 flex items-start gap-1.5 px-2.5 py-1.5 bg-[#fbbf24]/5 border border-[#fbbf24]/20 rounded-lg">
+                                    <span className="material-symbols-outlined text-[12px] text-[#fbbf24] shrink-0 mt-0.5">lightbulb</span>
+                                    <p className="text-[10.5px] text-[#fcd34d] font-[Mukta] leading-relaxed line-clamp-2">{q.note}</p>
+                                  </div>
+                                )}
                               </div>
                             </div>
 
@@ -1214,6 +1237,14 @@ function CreateModelSetForm() {
                       </div>
                     );
                   })}
+
+                  {/* Answer Note in Live Preview */}
+                  {activeQ?.note && (
+                    <div className="mt-2 flex items-start gap-1.5 p-2.5 bg-[#fbbf24]/8 border border-[#fbbf24]/25 rounded-lg">
+                      <span className="material-symbols-outlined text-[13px] text-[#fbbf24] shrink-0 mt-0.5">lightbulb</span>
+                      <p className="text-[10px] text-[#fcd34d] font-[Mukta] leading-relaxed">{activeQ.note}</p>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

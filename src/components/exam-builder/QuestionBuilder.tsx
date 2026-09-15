@@ -202,6 +202,25 @@ export default function QuestionBuilder({
           })}
         </div>
       </div>
+
+      {/* Answer Note / Explanation Section */}
+      <div className="mt-4 bg-[#12151e] p-4 rounded-lg border border-white/[0.06]">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-2">
+            <span className="material-symbols-outlined text-[16px] text-[#fbbf24]">lightbulb</span>
+            <label className="text-[10px] font-bold uppercase tracking-widest text-[#9ca3af]">
+              Note of the Answer / Explanation (उत्तरको व्याख्या वा टिपोट)
+            </label>
+          </div>
+          <span className="text-[9px] text-[#6b7280]">Shown during practice & exam review</span>
+        </div>
+        <textarea
+          className="w-full bg-[#10131a] border border-white/[0.08] focus:border-[#fbbf24]/60 focus:ring-1 focus:ring-[#fbbf24]/30 rounded-lg p-3 text-[13px] text-white font-[Mukta] leading-relaxed resize-y min-h-[70px] placeholder:text-[#3f4451] focus:outline-none transition-all"
+          placeholder="सहि उत्तरको व्याख्या, स्रोत वा मुख्य जानकारी यहाँ लेख्नुहोस् (Note or explanation of why the answer is correct)..."
+          value={question.note || ""}
+          onChange={(e) => handleUpdate("note", e.target.value)}
+        />
+      </div>
     </div>
   );
 }

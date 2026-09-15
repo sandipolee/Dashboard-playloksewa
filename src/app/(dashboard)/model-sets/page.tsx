@@ -26,6 +26,7 @@ interface QuestionDetail {
   subject: string;
   options: { id: string; textEn: string; textNp: string }[];
   correct_option_id: string;
+  note?: string;
 }
 
 export default function ModelSets() {
@@ -471,6 +472,14 @@ export default function ModelSets() {
                         );
                       })}
                     </div>
+
+                    {/* Answer Note */}
+                    {q.note && (
+                      <div className="mt-3 flex items-start gap-2 px-3 py-2 bg-[#fbbf24]/8 border border-[#fbbf24]/20 rounded-lg">
+                        <span className="material-symbols-outlined text-[14px] text-[#fbbf24] shrink-0 mt-0.5">lightbulb</span>
+                        <p className="text-[11.5px] text-[#fcd34d] font-[Mukta] leading-relaxed">{q.note}</p>
+                      </div>
+                    )}
                   </div>
                 ))
               )}

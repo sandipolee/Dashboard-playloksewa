@@ -40,8 +40,12 @@ CREATE TABLE IF NOT EXISTS public.model_set_questions (
   text_en TEXT,
   options JSONB NOT NULL DEFAULT '[]'::jsonb,
   correct_option_id TEXT DEFAULT 'A',
+  note TEXT,
   created_at TIMESTAMPTZ DEFAULT NOW()
 );
+
+-- Migration for existing installations
+ALTER TABLE public.model_set_questions ADD COLUMN IF NOT EXISTS note TEXT;
 
 -- ENABLE ROW LEVEL SECURITY (RLS)
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
